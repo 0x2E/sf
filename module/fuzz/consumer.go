@@ -42,7 +42,7 @@ func consumer(ch <-chan string, wg *sync.WaitGroup, app *model.App, f *FuzzModul
 	for entry := range ch {
 		id++
 		subdomain := entry + "." + app.Domain
-		err := dnsudp.Send(conn, subdomain, id)
+		err := dnsudp.Send(conn, subdomain, id, rawdns.QTypeA)
 		if err != nil {
 			continue
 		}

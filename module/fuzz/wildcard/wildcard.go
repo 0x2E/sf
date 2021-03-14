@@ -1,6 +1,7 @@
 package wildcard
 
 import (
+	"github.com/0x2E/rawdns"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/util/dnsudp"
 	"net"
@@ -42,7 +43,7 @@ func (w *WildcardModel) Init(app *model.App) error {
 
 	for i := 0; i < 6000; i++ { // 经测试，6000次基本可以爆破出所有泛解析目的IP
 		domain := randString(12) + "." + app.Domain
-		if err := dnsudp.Send(conn, domain, uint16(i)); err != nil {
+		if err := dnsudp.Send(conn, domain, uint16(i), rawdns.QTypeA); err != nil {
 			continue
 		}
 		queue <- struct{}{}

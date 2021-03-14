@@ -8,8 +8,8 @@ import (
 )
 
 // Send 向conn中发送DNS请求
-func Send(conn net.Conn, subdomain string, id uint16) error {
-	payload, err := rawdns.Marshal(id, 1, subdomain, rawdns.QTypeA)
+func Send(conn net.Conn, domain string, id uint16, qtype rawdns.QType) error {
+	payload, err := rawdns.Marshal(id, 1, domain, qtype)
 	if err != nil {
 		return errors.New("DNS marshal error: " + err.Error())
 	}

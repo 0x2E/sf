@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"github.com/0x2E/rawdns"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/util/dnsudp"
 	"github.com/urfave/cli/v2"
@@ -84,7 +85,7 @@ func setResolver(app *model.App, c *cli.Context) error {
 	}
 	defer conn.Close()
 
-	if err := dnsudp.Send(conn, "google.com", 123); err != nil {
+	if err := dnsudp.Send(conn, "google.com", 123, rawdns.QTypeA); err != nil {
 		return errors.New(fmt.Sprintf("cannot send DNS udp to resolver [%s]: %s\n", app.Resolver, err.Error()))
 	}
 
