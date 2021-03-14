@@ -3,6 +3,7 @@ package module
 import (
 	"fmt"
 	"github.com/0x2E/sf/model"
+	"github.com/0x2E/sf/module/axfr"
 	"github.com/0x2E/sf/module/fuzz"
 	"github.com/0x2E/sf/util/logger"
 	"sync"
@@ -20,6 +21,7 @@ type moduleInterface interface {
 func Load(app *model.App) error {
 	workers := []moduleInterface{
 		moduleInterface(fuzz.New()),
+		moduleInterface(axfr.New()),
 	}
 	var wg sync.WaitGroup // 各模块
 	wg.Add(len(workers))
