@@ -11,6 +11,7 @@ import (
 	"sync"
 )
 
+// FuzzModule 字典爆破模块
 type FuzzModule struct {
 	Name     string
 	Wildcard *wildcard.WildcardModel

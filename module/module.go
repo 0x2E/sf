@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// moduleInterface 模块接口
 type moduleInterface interface {
 	Run(app *model.App) error     // 运行
 	GetName() string              // 返回模块名称
@@ -20,7 +21,7 @@ func Load(app *model.App) error {
 	workers := []moduleInterface{
 		moduleInterface(fuzz.New()),
 	}
-	var wg sync.WaitGroup
+	var wg sync.WaitGroup // 各模块
 	wg.Add(len(workers))
 	for i, _ := range workers {
 		go run(app, &wg, workers[i])
