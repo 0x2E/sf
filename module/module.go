@@ -17,19 +17,19 @@ type moduleInterface interface {
 }
 
 // Load 初始化、启动各个模块
-func Load(app *model.App) error {
+func Load(app *model.App) {
 	workers := []moduleInterface{
 		moduleInterface(fuzz.New()),
 		moduleInterface(axfr.New()),
 	}
 	var wg sync.WaitGroup // 各模块
-	wg.Add(len(workers))
 	for i, _ := range workers {
+		wg.Add(1)
 		go run(app, &wg, workers[i])
 	}
+
 	wg.Wait()
-	log.Println("all modules done")
-	return nil
+	//log.Println("all modules done")
 }
 
 // run 启动模块
@@ -38,17 +38,19 @@ func run(app *model.App, wg *sync.WaitGroup, worker moduleInterface) {
 
 	startTime := time.Now()
 	workerName := worker.GetName()
-	loggerPrefix := "module [" + workerName + "] "
-	log.Println(loggerPrefix + "start")
+	logPrefix := "[" + workerName + "]"
+
+	log.Println(logPrefix + " start")
 
 	err := worker.Run(app)
 	if err != nil {
-		log.Println(loggerPrefix + "error and stop: " + err.Error())
+		log.Printf("%s error: %s\n", logPrefix, err.Error())
 		return
 	}
 
 	workerRes := worker.GetResult()
-	log.Printf("%s done, subdomains: %d, time: %s\n", loggerPrefix, len(workerRes), time.Since(startTime))
+	log.Printf("%s done, subdomains: %d, time: %s\n", logPrefix, len(workerRes), time.Since(startTime))
+
 	writeToApp(app, workerRes)
 }
 
@@ -57,6 +59,7 @@ func writeToApp(app *model.App, res map[string]string) {
 	if len(res) == 0 {
 		return
 	}
+
 	app.Result.Mu.Lock()
 	for k, v := range res {
 		if _, ok := app.Result.Data[k]; ok { // 结果已存在则跳过

@@ -4,6 +4,7 @@ import (
 	"github.com/0x2E/rawdns"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/util/dnsudp"
+	"github.com/pkg/errors"
 	"net"
 	"sync"
 )
@@ -31,7 +32,7 @@ func (w *WildcardModel) Init(app *model.App) error {
 	// 初始化黑名单
 	conn, err := net.Dial("udp", app.Resolver)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to create socket")
 	}
 	defer conn.Close()
 

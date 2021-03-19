@@ -3,6 +3,7 @@ package axfr
 import (
 	"github.com/0x2E/sf/model"
 	"github.com/miekg/dns"
+	"github.com/pkg/errors"
 	"regexp"
 	"strings"
 	"sync"
@@ -35,17 +36,19 @@ func (a *AxfrModel) GetResult() map[string]string { return a.Result.Data }
 
 func (a *AxfrModel) Run(app *model.App) error {
 	domain := dns.Fqdn(app.Domain)
+
 	// 获取NS
 	m := new(dns.Msg)
 	m.SetQuestion(domain, dns.TypeNS)
 	r, err := dns.Exchange(m, app.Resolver)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get NS record")
 	}
 	if len(r.Answer) == 0 {
 		return nil
 	}
-	// 检测每个NS的域传送
+
+	// 检测每个NS的域传送并保存结果
 	wg := sync.WaitGroup{}
 	for _, v := range r.Answer {
 		ns := strings.Replace(v.String(), v.Header().String(), "", 1)
@@ -65,7 +68,6 @@ func transfer(a *AxfrModel, wg *sync.WaitGroup, domain, ns string) {
 	m.SetAxfr(domain)
 	c, err := t.In(m, ns) // 默认2秒超时
 	if err != nil {
-		//fmt.Println(err.Error())
 		return
 	}
 

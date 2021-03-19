@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/module/fuzz/wildcard"
+	"github.com/pkg/errors"
 	"log"
 	"os"
 	"strings"
@@ -36,16 +37,22 @@ func (f *FuzzModule) GetName() string { return f.Name }
 func (f *FuzzModule) GetResult() map[string]string { return f.Result.Data }
 
 func (f *FuzzModule) Run(app *model.App) error {
+	logPrefix := "[" + f.Name + "]"
+
 	// 加载字典
 	dict, err := loadDict(app.Dict)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to load dict file")
 	}
 
+	log.Printf("%s dict: %d\n", logPrefix, len(dict))
+
 	// 设置泛解析黑名单
-	if err := f.Wildcard.Init(app); err != nil {
-		return err
+	err = f.Wildcard.Init(app)
+	if err != nil {
+		return errors.Wrap(err, "wildcard initialization failed")
 	}
+	log.Printf("%s wildcard initialization completed, blacklist: %d\n", logPrefix, len(f.Wildcard.Blacklist))
 
 	ch := make(chan string, app.Thread) // producer => consumer
 	var wg sync.WaitGroup               // producer(1) + consumer(n)
@@ -66,7 +73,7 @@ func (f *FuzzModule) Run(app *model.App) error {
 func loadDict(path string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to open "+path)
 	}
 	defer f.Close()
 
@@ -82,8 +89,9 @@ func loadDict(path string) ([]string, error) {
 		}
 		dict = append(dict, item)
 	}
-	res := make([]string, len(dict)) // 释放先前大cap的底层数组
-	copy(res, dict)
-	log.Printf("loaded entries from dict: %d\n", len(dict))
+
+	res := make([]string, len(dict))
+	copy(res, dict) // 为了释放先前大cap的底层数组
+
 	return res, nil
 }

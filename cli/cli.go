@@ -36,6 +36,6 @@ func Handle(args []string) {
 	}
 	err := c.Run(args)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
 	}
 }
