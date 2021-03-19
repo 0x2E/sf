@@ -24,8 +24,8 @@ func blMod2(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
 	blacklist.Store(ip, title)
 }
 
-//blThread 发送随机生成的子域名爆破黑名单IP
-func blThread(conn net.Conn, queue chan struct{}, blacklist *sync.Map, w *WildcardModel, done chan struct{}) {
+//blReceiver 黑名单爆破的接收者
+func blReceiver(conn net.Conn, queue <-chan struct{}, blacklist *sync.Map, w *WildcardModel, done chan struct{}) {
 	wgResp := sync.WaitGroup{} // 用于判定是否该加入黑名单的goroutine
 	for range queue {
 		resp, err := dnsudp.Receive(conn, 2)

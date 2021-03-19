@@ -40,9 +40,9 @@ func (w *WildcardModel) Init(app *model.App) error {
 	queue := make(chan struct{}, app.Queue)
 	receiverDone := make(chan struct{})
 
-	go blThread(conn, queue, blacklist, w, receiverDone)
+	go blReceiver(conn, queue, blacklist, w, receiverDone)
 
-	for i := 0; i < 6000; i++ { // 经测试，6000次基本可以爆破出所有泛解析目的IP
+	for i := 0; i < 1000; i++ { // 经测试，6000次基本可以爆破出所有泛解析目的IP
 		domain := randString(12) + "." + app.Domain
 		if err := dnsudp.Send(conn, domain, uint16(i), rawdns.QTypeA); err != nil {
 			continue
