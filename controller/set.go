@@ -2,12 +2,10 @@ package controller
 
 import (
 	"fmt"
-	"github.com/0x2E/rawdns"
 	"github.com/0x2E/sf/model"
-	"github.com/0x2E/sf/util/dnsudp"
+	"github.com/miekg/dns"
 	"github.com/urfave/cli/v2"
 	"log"
-	"net"
 	"os"
 	"regexp"
 )
@@ -70,23 +68,23 @@ func setOutput(app *model.App, c *cli.Context) {
 
 // setResolver 设置DNS服务器
 func setResolver(app *model.App, c *cli.Context) {
-	input := c.String("resolver")
-	app.Resolver = input + ":53"
+	input := c.String("resolver") + ":53"
 
-	// 测试是否可用
-	conn, err := net.Dial("udp", app.Resolver)
-	if err != nil {
-		log.Fatalf("cannot create socket to test resolver [%s]: %s\n", app.Resolver, err.Error())
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn("google.com"), dns.TypeA)
+	var r *dns.Msg
+	var err error
+	for i := 0; i < 2; i++ { // 重试几次
+		r, err = dns.Exchange(m, input)
+		if err == nil {
+			break
+		}
 	}
-	defer conn.Close()
+	if err != nil || r.Rcode != dns.RcodeSuccess { // 重试之后仍有错误
+		log.Fatal("resolver may be invalid: ", err.Error())
+	}
 
-	if err := dnsudp.Send(conn, "google.com", 123, rawdns.QTypeA); err != nil {
-		log.Fatalf("cannot send DNS udp to resolver [%s]: %s\n", app.Resolver, err.Error())
-	}
-
-	if _, err := dnsudp.Receive(conn, 2); err != nil {
-		log.Fatalf("cannot receive DNS udp from resolver [%s]: %s\n", app.Resolver, err.Error())
-	}
+	app.Resolver = input
 }
 
 // setThread 设置并发数
