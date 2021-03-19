@@ -2,11 +2,10 @@ package controller
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/module"
-	"github.com/0x2E/sf/util/logger"
 	"github.com/urfave/cli/v2"
+	"log"
 	"os"
 	"time"
 )
@@ -27,7 +26,7 @@ func Handle(c *cli.Context) error {
 		return err
 	}
 
-	logger.Info(fmt.Sprintf("Done, total time: %s", time.Since(app.Start)))
+	log.Printf("Done, total time: %s\n", time.Since(app.Start))
 	return nil
 }
 
@@ -46,7 +45,7 @@ func setup(app *model.App, c *cli.Context) error {
 func output(app *model.App) error {
 	if len(app.Result.Data) == 0 { // 若没有结果则删除已创建的输出文件
 		if err := os.Remove(app.Output); err != nil {
-			logger.Info("cannot delete empty output file: " + err.Error())
+			log.Println("cannot delete empty output file: " + err.Error())
 		}
 		return nil
 	}

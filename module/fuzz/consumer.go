@@ -22,7 +22,7 @@ func consumer(ch <-chan string, wg *sync.WaitGroup, app *model.App, f *FuzzModul
 
 	conn, err := net.Dial("udp", app.Resolver)
 	if err != nil {
-		//logger.Info("cannot create socket in a consumer: " + err.Error())
+		//log.Println("cannot create socket in a consumer: " + err.Error())
 		return
 	}
 	defer conn.Close()

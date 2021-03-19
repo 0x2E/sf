@@ -1,11 +1,10 @@
 package module
 
 import (
-	"fmt"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/module/axfr"
 	"github.com/0x2E/sf/module/fuzz"
-	"github.com/0x2E/sf/util/logger"
+	"log"
 	"sync"
 	"time"
 )
@@ -29,7 +28,7 @@ func Load(app *model.App) error {
 		go run(app, &wg, workers[i])
 	}
 	wg.Wait()
-	logger.Info("all modules done")
+	log.Println("all modules done")
 	return nil
 }
 
@@ -40,16 +39,16 @@ func run(app *model.App, wg *sync.WaitGroup, worker moduleInterface) {
 	startTime := time.Now()
 	workerName := worker.GetName()
 	loggerPrefix := "module [" + workerName + "] "
-	logger.Info(loggerPrefix + "start")
+	log.Println(loggerPrefix + "start")
 
 	err := worker.Run(app)
 	if err != nil {
-		logger.Error(loggerPrefix + "error and stop: " + err.Error())
+		log.Println(loggerPrefix + "error and stop: " + err.Error())
 		return
 	}
 
 	workerRes := worker.GetResult()
-	logger.Info(fmt.Sprintf("%s done, subdomains: %d, time: %s", loggerPrefix, len(workerRes), time.Since(startTime)))
+	log.Printf("%s done, subdomains: %d, time: %s\n", loggerPrefix, len(workerRes), time.Since(startTime))
 	writeToApp(app, workerRes)
 }
 

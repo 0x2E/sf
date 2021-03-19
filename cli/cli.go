@@ -2,8 +2,8 @@ package cli
 
 import (
 	"github.com/0x2E/sf/controller"
-	"github.com/0x2E/sf/util/logger"
 	"github.com/urfave/cli/v2"
+	"log"
 )
 
 const (
@@ -36,6 +36,6 @@ func Handle(args []string) {
 	}
 	err := c.Run(args)
 	if err != nil {
-		logger.Error(err.Error())
+		log.Fatal(err.Error())
 	}
 }

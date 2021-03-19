@@ -2,10 +2,9 @@ package fuzz
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/module/fuzz/wildcard"
-	"github.com/0x2E/sf/util/logger"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -85,6 +84,6 @@ func loadDict(path string) ([]string, error) {
 	}
 	res := make([]string, len(dict)) // 释放先前大cap的底层数组
 	copy(res, dict)
-	logger.Info(fmt.Sprintf("loaded entries from dict: %d", len(dict)))
+	log.Printf("loaded entries from dict: %d\n", len(dict))
 	return res, nil
 }
