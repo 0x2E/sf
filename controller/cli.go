@@ -1,7 +1,6 @@
-package cli
+package controller
 
 import (
-	"github.com/0x2E/sf/controller"
 	"github.com/urfave/cli/v2"
 	"log"
 )
@@ -14,8 +13,8 @@ const (
 	resolverDefault = "8.8.8.8"
 )
 
-// Handle 处理cli输入
-func Handle(args []string) {
+// Cli 处理cli输入
+func Cli(args []string) {
 	c := &cli.App{
 		Name:    "sf",
 		Usage:   "subdomain finder - https://github.com/0x2E/sf",
@@ -29,7 +28,7 @@ func Handle(args []string) {
 			&cli.IntFlag{Name: "queue", Aliases: []string{"q"}, Usage: "the size of the udp sending and receiving queues. it depends on your system network conditions. the higher the faster, but it is easy to cause omissions.", Value: queueDefault},
 			&cli.IntFlag{Name: "wildcard", Aliases: []string{"w"}, Usage: "modes for handling wildcard DNS", Value: wildcardDefault},
 		},
-		Action: controller.Handle,
+		Action: handle,
 		//UseShortOptionHandling: true,
 		HideVersion:     true,
 		HideHelpCommand: true,

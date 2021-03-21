@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/0x2E/sf/cli"
+	"github.com/0x2E/sf/controller"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -33,5 +33,5 @@ func main() {
 	}
 
 	log.SetFlags(log.Ltime)
-	cli.Handle(os.Args)
+	controller.Cli(os.Args)
 }

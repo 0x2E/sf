@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// Handle 控制整个app的运行周期
-func Handle(c *cli.Context) error {
+// handle 控制整个app的运行周期
+func handle(c *cli.Context) error {
 	app := model.NewApp()
 
 	setup(app, c) // 配置app
@@ -22,7 +22,6 @@ func Handle(c *cli.Context) error {
 	output(app) // 输出最终结果
 
 	log.Printf("done, total subdomains: %d, total time: %s\n", len(app.Result.Data), time.Since(app.Start))
-
 	return nil
 }
 
