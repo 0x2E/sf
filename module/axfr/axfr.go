@@ -11,7 +11,7 @@ import (
 
 // 测试环境：https://github.com/vulhub/vulhub/tree/master/dns/dns-zone-transfer
 
-// AxfrModel 域传送检测模块
+// AxfrModel 域传送检测模块主体结构
 type AxfrModel struct {
 	Name   string
 	Result struct {
@@ -20,6 +20,7 @@ type AxfrModel struct {
 	}
 }
 
+// New 初始化一个新的域传送模块结构体
 func New() *AxfrModel {
 	return &AxfrModel{
 		Name: "zone-transfer",
@@ -30,10 +31,13 @@ func New() *AxfrModel {
 	}
 }
 
+// GetName 返回名称
 func (a *AxfrModel) GetName() string { return a.Name }
 
+// GetResult 返回结果
 func (a *AxfrModel) GetResult() map[string]string { return a.Result.Data }
 
+// Run 运行
 func (a *AxfrModel) Run(app *model.App) error {
 	domain := dns.Fqdn(app.Domain)
 
@@ -60,6 +64,7 @@ func (a *AxfrModel) Run(app *model.App) error {
 	return nil
 }
 
+// transfer 对一个传入的ns测试域传送
 func transfer(a *AxfrModel, wg *sync.WaitGroup, domain, ns string) {
 	defer wg.Done()
 

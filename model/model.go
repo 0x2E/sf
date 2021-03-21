@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// App 主体结构
 type App struct {
 	Domain   string    // 域名
 	Dict     string    // 用于爆破的字典
@@ -20,6 +21,7 @@ type App struct {
 	}
 }
 
+// NewApp 初始化一个新的App结构体
 func NewApp() *App {
 	return &App{
 		Start: time.Now(),

@@ -19,7 +19,7 @@ func blMod1(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
 func blMod2(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
 	defer wg.Done()
 
-	_, title := getPageTitle("http://" + subdomain)
+	title, _ := getPageTitle("http://" + subdomain)
 	// 即使是空字符串也要保存
 	blacklist.Store(ip, title)
 }

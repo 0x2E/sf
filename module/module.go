@@ -23,7 +23,7 @@ func Load(app *model.App) {
 		moduleInterface(axfr.New()),
 	}
 	var wg sync.WaitGroup // 各模块
-	for i, _ := range workers {
+	for i := range workers {
 		wg.Add(1)
 		go run(app, &wg, workers[i])
 	}

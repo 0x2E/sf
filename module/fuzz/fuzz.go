@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// FuzzModule 字典爆破模块
+// FuzzModule 字典爆破模块主体结构
 type FuzzModule struct {
 	Name     string
 	Wildcard *wildcard.WildcardModel
@@ -21,6 +21,7 @@ type FuzzModule struct {
 	}
 }
 
+// New 初始化一个新的字典爆破模块结构体
 func New() *FuzzModule {
 	return &FuzzModule{
 		Name:     "fuzz",
@@ -32,10 +33,13 @@ func New() *FuzzModule {
 	}
 }
 
+// GetName 返回名称
 func (f *FuzzModule) GetName() string { return f.Name }
 
+// GetResult 返回结果
 func (f *FuzzModule) GetResult() map[string]string { return f.Result.Data }
 
+// Run 运行
 func (f *FuzzModule) Run(app *model.App) error {
 	logPrefix := "[" + f.Name + "]"
 

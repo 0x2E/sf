@@ -53,9 +53,8 @@ func setOutput(app *model.App, c *cli.Context) {
 	if input != "" {
 		outFile = input
 		return
-	} else {
-		outFile = fmt.Sprintf("%s-%d.txt", app.Domain, app.Start.Unix())
 	}
+	outFile = fmt.Sprintf("%s-%d.txt", app.Domain, app.Start.Unix())
 
 	f, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
 	if err != nil {

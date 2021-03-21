@@ -19,7 +19,7 @@ func checkMod1(w *WildcardModel, subdomain, ip string) bool { return true }
 
 // checkMod2 严格模式测试
 func checkMod2(w *WildcardModel, subdomain, ip string) bool {
-	err, title := getPageTitle("http" + subdomain)
+	title, err := getPageTitle("http" + subdomain)
 	if err != nil {
 		// 无法获取标题，丢弃
 		return true
@@ -33,27 +33,27 @@ func checkMod2(w *WildcardModel, subdomain, ip string) bool {
 }
 
 // getPageTitle 获取url的网页标题，2秒超时。无法获取到、获取到的都是空格换行符时，返回空字符串
-func getPageTitle(url string) (error, string) {
+func getPageTitle(url string) (string, error) {
 	c := http.Client{Timeout: 2 * time.Second}
 	resp, err := c.Get(url)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return err, ""
+		return "", err
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	re, _ := regexp.Compile(`<title>([\s\S]*)</title>`)
 	title := re.FindStringSubmatch(string(body))
 	if len(title) < 2 {
-		return err, ""
+		return "", err
 	}
-	return nil, strings.TrimSpace(title[1])
+	return strings.TrimSpace(title[1]), nil
 }
 
 // randString 生成长度为n的随机字符串

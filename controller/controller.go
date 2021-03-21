@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Handle
+// Handle 控制整个app的运行周期
 func Handle(c *cli.Context) error {
 	app := model.NewApp()
 
@@ -46,7 +46,7 @@ func output(app *model.App) {
 	if err != nil { // 无法输出到文件，只能输出在终端了
 		log.Print("failed to write results into file, so output to the console")
 		fmt.Println("============")
-		for k, _ := range app.Result.Data {
+		for k := range app.Result.Data {
 			fmt.Println(k)
 		}
 		return

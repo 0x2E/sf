@@ -9,6 +9,7 @@ import (
 	"sync"
 )
 
+// WildcardModel 泛解析模块主体结构
 type WildcardModel struct {
 	Mod       int
 	Blacklist map[string]string // 黑名单
