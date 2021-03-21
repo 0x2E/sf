@@ -19,7 +19,7 @@ func checkMod1(w *WildcardModel, subdomain, ip string) bool { return true }
 
 // checkMod2 严格模式测试
 func checkMod2(w *WildcardModel, subdomain, ip string) bool {
-	title, err := getPageTitle("http" + subdomain)
+	title, err := getPageTitle("http://" + subdomain)
 	if err != nil {
 		// 无法获取标题，丢弃
 		return true
