@@ -61,16 +61,15 @@ func setResolver(app *model.App, c *cli.Context) {
 	input := c.String("resolver") + ":53"
 
 	m := new(dns.Msg)
-	m.SetQuestion(dns.Fqdn("google.com"), dns.TypeA)
-	var r *dns.Msg
+	m.SetQuestion(dns.Fqdn(app.Domain), dns.TypeA)
 	var err error
 	for i := 0; i < 2; i++ { // 重试几次
-		r, err = dns.Exchange(m, input)
+		_, err = dns.Exchange(m, input)
 		if err == nil {
 			break
 		}
 	}
-	if err != nil || r.Rcode != dns.RcodeSuccess { // 重试之后仍有错误
+	if err != nil { // 重试之后仍有错误
 		log.Fatal("resolver may be invalid: ", err.Error())
 	}
 
