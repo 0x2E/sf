@@ -34,16 +34,13 @@ func setup(app *model.App, c *cli.Context) {
 
 // output 将结果输出到文件
 func output(app *model.App) {
-	if len(app.Result.Data) == 0 { // 若没有结果则删除已创建的输出文件
-		if err := os.Remove(app.Output); err != nil {
-			log.Println("failed to delete empty output file: " + err.Error())
-		}
+	if len(app.Result.Data) == 0 {
 		return
 	}
 
-	f, err := os.OpenFile(app.Output, os.O_WRONLY, 0666)
-	if err != nil { // 无法输出到文件，只能输出在终端了
-		log.Print("failed to write results into file, so output to the console")
+	f, err := os.OpenFile(app.Output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
+	if err != nil { // 无法创建结果文件，就输出到终端
+		log.Print("failed to write results into file, so output to the console: " + err.Error())
 		fmt.Println("============")
 		for k := range app.Result.Data {
 			fmt.Println(k)

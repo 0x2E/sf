@@ -48,21 +48,12 @@ func setDict(app *model.App, c *cli.Context) {
 
 // setOutput 设置输出文件
 func setOutput(app *model.App, c *cli.Context) {
-	var outFile string
 	input := c.String("output")
-	if input != "" {
-		outFile = input
+	if input == "" {
+		app.Output = fmt.Sprintf("%s-%d.txt", app.Domain, app.Start.Unix())
 		return
 	}
-	outFile = fmt.Sprintf("%s-%d.txt", app.Domain, app.Start.Unix())
-
-	f, err := os.OpenFile(outFile, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
-	if err != nil {
-		log.Fatal("failed to set output file: ", err.Error())
-	}
-	f.Close()
-
-	app.Output = outFile
+	app.Output = input
 }
 
 // setResolver 设置DNS服务器
