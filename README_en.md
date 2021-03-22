@@ -26,9 +26,10 @@ You can download the compiled binary file at [release](https://github.com/0x2E/s
 |d|「dict」dictionary|./dict.txt|
 |o|「output」file to save results|./{{ domain-name }}.{{ start-time }}.txt|
 |r|「resolver」DNS resolver|8.8.8.8|
-|t|「thread」number of thread|300|
-|q|「queue」UDP send-receive queue length|300|
+|t|「thread」number of thread|100|
+|q|「queue」UDP send-receive queue length|100|
 |w|「wildcard」wildcard processing mode: simple mode 1, strict mode 2|1|
+|R|「retry」number of retries|2|
 
 ## TODO
 

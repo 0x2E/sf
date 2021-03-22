@@ -20,6 +20,7 @@ var setAppList = []setApp{
 	setResolver,
 	setQueue,
 	setWildcard,
+	setRetry,
 }
 
 // setDomain 设置域名
@@ -104,4 +105,14 @@ func setWildcard(app *model.App, c *cli.Context) {
 	}
 
 	app.Wildcard = input
+}
+
+// setRetry 设置重试次数
+func setRetry(app *model.App, c *cli.Context) {
+	input := c.Int("retry")
+	if input < 0 || input > 99 {
+		log.Fatal("queue must between 0 and 99")
+	}
+
+	app.Retry = input
 }

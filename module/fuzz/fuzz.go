@@ -13,9 +13,13 @@ import (
 
 // FuzzModule 字典爆破模块主体结构
 type FuzzModule struct {
-	Name     string
-	Wildcard *wildcard.WildcardModel
-	Result   struct {
+	Name       string
+	Wildcard   *wildcard.WildcardModel
+	UnReceived struct {
+		Data []string
+		Mu   sync.Mutex
+	}
+	Result struct {
 		Data map[string]string
 		Mu   sync.Mutex
 	}
@@ -26,6 +30,10 @@ func New() *FuzzModule {
 	return &FuzzModule{
 		Name:     "fuzz",
 		Wildcard: &wildcard.WildcardModel{Blacklist: make(map[string]string)},
+		UnReceived: struct {
+			Data []string
+			Mu   sync.Mutex
+		}{Data: make([]string, 0, 5000)},
 		Result: struct {
 			Data map[string]string
 			Mu   sync.Mutex
@@ -43,59 +51,61 @@ func (f *FuzzModule) GetResult() map[string]string { return f.Result.Data }
 func (f *FuzzModule) Run(app *model.App) error {
 	logPrefix := "[" + f.Name + "]"
 
-	// 加载字典
-	dict, err := loadDict(app.Dict)
-	if err != nil {
-		return errors.Wrap(err, "failed to load dict file")
-	}
-
-	log.Printf("%s dict: %d\n", logPrefix, len(dict))
-
 	// 设置泛解析黑名单
-	err = f.Wildcard.Init(app)
-	if err != nil {
+	if err := f.Wildcard.Init(app); err != nil {
 		return errors.Wrap(err, "wildcard initialization failed")
 	}
 	log.Printf("%s wildcard initialization completed, blacklist: %d\n", logPrefix, len(f.Wildcard.Blacklist))
 
-	ch := make(chan string, app.Thread) // producer => consumer
-	var wg sync.WaitGroup               // producer(1) + consumer(n)
-
-	wg.Add(1)
-	go producer(ch, &wg, dict)
-
-	for i := 0; i < app.Thread; i++ {
-		wg.Add(1)
-		go consumer(ch, &wg, app, f)
+	// 加载字典
+	if err := loadDict(app, f); err != nil {
+		return errors.Wrap(err, "failed to load dict file")
 	}
 
-	wg.Wait()
+	for try := 1; try <= (app.Retry + 1); try++ {
+		log.Printf("%s run#%d, dict: %d\n", logPrefix, try, len(f.UnReceived.Data))
+
+		ch := make(chan string, app.Thread) // producer => consumer
+		var wg sync.WaitGroup               // producer(1) + consumer(n)
+
+		wg.Add(1)
+		go producer(ch, &wg, f)
+
+		for i := 0; i < app.Thread; i++ {
+			wg.Add(1)
+			go consumer(ch, &wg, app, f)
+		}
+
+		wg.Wait()
+
+		if len(f.UnReceived.Data) == 0 {
+			break
+		}
+	}
+
 	return nil
 }
 
 // loadDict 加载字典
-func loadDict(path string) ([]string, error) {
-	f, err := os.Open(path)
+func loadDict(app *model.App, f *FuzzModule) error {
+	fs, err := os.Open(app.Dict)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open "+path)
+		return errors.Wrap(err, "failed to open dict file")
 	}
-	defer f.Close()
+	defer fs.Close()
 
 	// 字典去重
-	dict := make([]string, 0, 50000)       // 去重后的字典，cap大一点减少底层数组扩容次数
+	suffix := "." + app.Domain
 	existMark := make(map[string]struct{}) // 标记已存在的数据
-	scanner := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(fs)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
-		item := strings.TrimSpace(scanner.Text())
+		item := strings.TrimSpace(scanner.Text()) + suffix
 		if _, ok := existMark[item]; ok {
 			continue
 		}
-		dict = append(dict, item)
+		f.UnReceived.Data = append(f.UnReceived.Data, item)
 	}
 
-	res := make([]string, len(dict))
-	copy(res, dict) // 为了释放先前大cap的底层数组
-
-	return res, nil
+	return nil
 }

@@ -7,13 +7,14 @@ import (
 
 // App 主体结构
 type App struct {
-	Domain   string    // 域名
-	Dict     string    // 用于爆破的字典
-	Resolver string    // DNS解析服务器
-	Output   string    // 输出文件
-	Thread   int       // 并发数
-	Queue    int       // UDP发送-接收队列大小
-	Wildcard int       // 泛解析处理模式，1 => 宽松模式，2 => 严格模式
+	Domain   string // 域名
+	Dict     string // 用于爆破的字典
+	Resolver string // DNS解析服务器
+	Output   string // 输出文件
+	Thread   int    // 并发数
+	Queue    int    // UDP发送-接收队列大小
+	Wildcard int    // 泛解析处理模式，1 => 宽松模式，2 => 严格模式
+	Retry    int
 	Start    time.Time // 开始时间
 	Result   struct {  // 结果
 		Data map[string]string

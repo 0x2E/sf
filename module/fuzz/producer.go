@@ -5,10 +5,10 @@ import (
 )
 
 // producer
-func producer(ch chan<- string, wg *sync.WaitGroup, dict []string) {
+func producer(ch chan<- string, wg *sync.WaitGroup, f *FuzzModule) {
 	defer wg.Done()
-	for i := range dict {
-		ch <- dict[i]
+	for i := range f.UnReceived.Data {
+		ch <- f.UnReceived.Data[i]
 	}
 	close(ch)
 }
