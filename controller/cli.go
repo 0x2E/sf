@@ -10,7 +10,6 @@ const (
 	queueDefault    = 100
 	wildcardDefault = 1
 	retryDefault    = 2
-	dictDefault     = "./dict.txt"
 	resolverDefault = "8.8.8.8"
 )
 
@@ -22,7 +21,7 @@ func Cli(args []string) {
 		Version: "v0.1",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "url", Aliases: []string{"u"}, Usage: "target url or domain name", Required: true},
-			&cli.StringFlag{Name: "dict", Aliases: []string{"d"}, Usage: "load dictionary from `FILE`", Value: dictDefault},
+			&cli.StringFlag{Name: "dict", Aliases: []string{"d"}, Usage: "load dictionary from `FILE`"},
 			&cli.StringFlag{Name: "output", Aliases: []string{"o"}, Usage: "output results to `FILE`"},
 			&cli.StringFlag{Name: "resolver", Aliases: []string{"r"}, Usage: "DNS resolver", Value: resolverDefault},
 			&cli.IntFlag{Name: "thread", Aliases: []string{"t"}, Usage: "the number of concurrent, each will occupy a temporary port of the system", Value: threadDefault},

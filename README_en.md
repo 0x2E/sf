@@ -16,15 +16,11 @@ You can download the compiled binary file at [release](https://github.com/0x2E/s
 
 ## Usage
 
-```bash
-./sf -u example.com
-```
-
 |flags|function|default|
 |:-:|:-:|:-:|
 |u|「url」target domain name||
-|d|「dict」dictionary|./dict.txt|
-|o|「output」file to save results|./{{ domain-name }}.{{ start-time }}.txt|
+|d|「dict」dictionary path|[built-in dictionary](https://github.com/0x2e/sf/blob/main/module/fuzz/dict.txt)|
+|o|「output」output path|[domain name]-[timestamp].txt|
 |r|「resolver」DNS resolver|8.8.8.8|
 |t|「thread」number of thread|100|
 |q|「queue」UDP send-receive queue length|100|

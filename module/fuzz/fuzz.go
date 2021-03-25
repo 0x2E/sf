@@ -2,6 +2,7 @@ package fuzz
 
 import (
 	"bufio"
+	"embed"
 	"github.com/0x2E/sf/model"
 	"github.com/0x2E/sf/module/fuzz/wildcard"
 	"github.com/pkg/errors"
@@ -86,9 +87,24 @@ func (f *FuzzModule) Run(app *model.App) error {
 	return nil
 }
 
+type sfFile interface {
+	Read(p []byte) (n int, err error)
+	Close() error
+}
+
+//go:embed dict.txt
+var embedFile embed.FS
+
 // loadDict 加载字典
 func loadDict(app *model.App, f *FuzzModule) error {
-	fs, err := os.Open(app.Dict)
+	var fs sfFile
+	var err error
+	if app.Dict != "" {
+		fs, err = os.Open(app.Dict)
+	} else {
+		fs, err = embedFile.Open("dict.txt")
+	}
+
 	if err != nil {
 		return errors.Wrap(err, "failed to open dict file")
 	}

@@ -12,19 +12,15 @@ SF 是一个高效的子域名收集工具，支持字典爆破等功能，更�
 
 ## 安装
 
-你可以在 [release](https://github.com/0x2E/sf/releases) 下载已经编译好的二进制文件，或者使用 main 分支代码自行编译。
+你可以在 [release](https://github.com/0x2E/sf/releases) 页面下载编译完成的二进制文件，或者自行编译 main 分支源码。
 
 ## 使用
-
-```bash
-./sf -u example.com
-```
 
 |标志|功能|默认值|
 |:-:|:-:|:-:|
 |u|「url」目标域名||
-|d|「dict」爆破字典|./dict.txt|
-|o|「output」保存结果的文件|./{{ 域名 }}.{{ 时间 }}.txt|
+|d|「dict」字典路径|[内置字典](https://github.com/0x2e/sf/blob/main/module/fuzz/dict.txt)|
+|o|「output」输出路径|[域名]-[时间戳].txt|
 |r|「resolver」DNS 解析服务器|8.8.8.8|
 |t|「thread」并发数|100|
 |q|「queue」UDP 发送-接收队列长度|100|

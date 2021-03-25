@@ -38,11 +38,13 @@ func setDomain(app *model.App, c *cli.Context) {
 // setDict 设置字典
 func setDict(app *model.App, c *cli.Context) {
 	input := c.String("dict")
-	f, err := os.Open(input)
-	if err != nil {
-		log.Fatal("failed to open dict file: ", err.Error())
+	if input != "" {
+		f, err := os.Open(input)
+		if err != nil {
+			log.Fatal("failed to open dict file: ", err.Error())
+		}
+		f.Close()
 	}
-	f.Close()
 
 	app.Dict = input
 }
