@@ -12,7 +12,11 @@ SF is an efficient subdomain collection tool that supports dictionary blasting a
 
 ## Installation
 
-You can download the compiled binary file at [release](https://github.com/0x2E/sf/releases), or use the main branch code to compile it yourself.
+Three ways:
+
+1. Download the compiled executable file on the [release](https://github.com/0x2E/sf/releases) page
+2. Download the executable file compiled after each git-push: enter any workflow page in [Actions](https://github.com/0x2E/sf/actions), go down the page to find Artifacts
+3. Compile the main branch source code by yourself
 
 ## Usage
 

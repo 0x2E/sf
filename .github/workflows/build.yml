@@ -24,7 +24,14 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - name: build
+      - name: Build
         run: go build .
 
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        if: success()
+        with:
+          name: bin@${{ matrix.os }}
+          path: |
+            sf.exe
+            sf

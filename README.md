@@ -12,7 +12,11 @@ SF 是一个高效的子域名收集工具，支持字典爆破等功能，更�
 
 ## 安装
 
-你可以在 [release](https://github.com/0x2E/sf/releases) 页面下载编译完成的二进制文件，或者自行编译 main 分支源码。
+三种方式：
+
+1. 在 [release](https://github.com/0x2E/sf/releases) 页面下载编译完成的可执行文件
+2. 下载每次 git-push 后自动编译的可执行文件：进入 [Actions](https://github.com/0x2E/sf/actions) 中任意一次 workflow 页面， 下滑页面找到 Artifacts
+3. 自行编译 main 分支源码
 
 ## 使用
 
