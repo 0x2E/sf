@@ -11,23 +11,36 @@ import (
 
 // WildcardModel 泛解析模块主体结构
 type WildcardModel struct {
-	Mod       int
-	Blacklist map[string]string // 黑名单
-	c         checkAction       // 检测函数
-	b         blAction          // 黑名单初始化函数
+	mode      int
+	blacklist struct {
+		maxLen int
+		data   map[string]string
+	}
+	c checkAction // 检测函数
+	b blAction    // 黑名单初始化函数
+}
+
+// New 返回一个泛解析结构体
+func New() *WildcardModel {
+	return &WildcardModel{
+		blacklist: struct {
+			maxLen int
+			data   map[string]string
+		}{data: make(map[string]string)},
+	}
 }
 
 // Init 初始化黑名单，设置检测函数
 func (w *WildcardModel) Init(app *model.App) error {
-	// 选择检测函数
-	w.Mod = app.Wildcard
-	switch w.Mod {
+	w.mode = app.Wildcard.Mode
+	w.blacklist.maxLen = app.Wildcard.BlacklistMaxLen
+	switch w.mode {
 	case 1:
-		w.c = checkMod1
-		w.b = blMod1
+		w.c = checkMode1
+		w.b = blMode1
 	case 2:
-		w.c = checkMod2
-		w.b = blMod2
+		w.c = checkMode2
+		w.b = blMode2
 	}
 
 	// 初始化黑名单
@@ -43,7 +56,7 @@ func (w *WildcardModel) Init(app *model.App) error {
 
 	go blReceiver(conn, queue, blacklist, w, receiverDone)
 
-	for i := 0; i < 1000; i++ { // 经测试，6000次基本可以爆破出所有泛解析目的IP
+	for i := 0; i < w.blacklist.maxLen; i++ {
 		domain := randString(12) + "." + app.Domain
 		if err := dnsudp.Send(conn, domain, uint16(i), rawdns.QTypeA); err != nil {
 			continue
@@ -55,7 +68,7 @@ func (w *WildcardModel) Init(app *model.App) error {
 	<-receiverDone
 
 	blacklist.Range(func(k, v interface{}) bool {
-		w.Blacklist[k.(string)] = v.(string)
+		w.blacklist.data[k.(string)] = v.(string)
 		return true
 	})
 	return nil
@@ -66,9 +79,11 @@ func (w *WildcardModel) Init(app *model.App) error {
 // 2. 严格模式下命中黑名单，但无法获取网页标题
 // 3. 严格模式下命中黑名单，网页标题与黑名单中的高度相似
 func (w *WildcardModel) Check(subdomain, ip string) bool {
-	if _, ok := w.Blacklist[ip]; !ok {
+	if _, ok := w.blacklist.data[ip]; !ok {
 		return false
 	}
 	res := w.c(w, subdomain, ip)
 	return res
 }
+
+func (w *WildcardModel) BlacklistLen() int { return len(w.blacklist.data) }

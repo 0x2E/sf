@@ -13,18 +13,18 @@ import (
 // checkAction 泛解析黑名单检测函数
 type checkAction func(w *WildcardModel, subdomain, ip string) bool
 
-// checkMod1 宽松模式测试
+// checkMode1 宽松模式测试
 // 之前已经判断是否匹配到黑名单了，这里没有继续的操作，留空以备扩展
-func checkMod1(w *WildcardModel, subdomain, ip string) bool { return true }
+func checkMode1(w *WildcardModel, subdomain, ip string) bool { return true }
 
-// checkMod2 严格模式测试
-func checkMod2(w *WildcardModel, subdomain, ip string) bool {
+// checkMode2 严格模式测试
+func checkMode2(w *WildcardModel, subdomain, ip string) bool {
 	title, err := getPageTitle("http://" + subdomain)
 	if err != nil {
 		// 无法获取标题，丢弃
 		return true
 	}
-	rank := strsim.Compare(title, w.Blacklist[ip])
+	rank := strsim.Compare(title, w.blacklist.data[ip])
 	if rank > 0.5 {
 		// 相似度较高，丢弃
 		return true

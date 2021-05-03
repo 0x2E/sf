@@ -20,16 +20,30 @@ SF 是一个高效的子域名收集工具，支持字典爆破等功能，更�
 
 ## 使用
 
-|标志|功能|默认值|
-|:-:|:-:|:-:|
-|u|「url」目标域名||
-|d|「dict」字典路径|[内置字典](https://github.com/0x2e/sf/blob/main/module/fuzz/dict.txt)|
-|o|「output」输出路径|[域名]-[时间戳].txt|
-|r|「resolver」DNS 解析服务器|8.8.8.8|
-|t|「thread」并发数|100|
-|q|「queue」UDP 发送-接收队列长度|100|
-|w|「wildcard」泛解析处理模式：简易模式 1，严格模式 2|1|
-|R|「retry」重试次数|2|
+```bash
+$ ./sf -h
+NAME:
+   sf - subdomain finder - https://github.com/0x2E/sf
+
+USAGE:
+   sf [global options] [arguments...]
+
+GLOBAL OPTIONS:
+   --url value, -u value                        Target url or domain name
+   --dict value, -d value                       Load dictionary from a file
+   --output value, -o value                     Output results to a file
+   --resolver value, -r value                   [fuzz] DNS resolver (default: "8.8.8.8")
+   --thread value, -t value                     [fuzz] The number of threads. Each thread will occupy a temporary port of the system until the e
+nd of the fuzz (default: 100)
+   --queue value, -q value                      [fuzz] The length of the task queue. Too high may fill the system socket buffer and cause packet
+ loss (default: 100)
+   --wildcardMode value, -w value               [fuzz] Two modes (1 or 2) for processing wildcard records. Mode 1 is only based on the IP blackl
+ist. Mode 2 matches the IP blacklist, compares the similarity of web page titles after hits, and degenerates to mode 1 if port 80 cannot be acce
+ssed. (default: 1)
+   --wildcardBlacklistMaxLen value, --wl value  [fuzz] The maximum length of the IP blacklist for wildcard records (default: 1000)
+   --retry value, -R value                      [fuzz] The number of retries (default: 2)
+   --help, -h                                   show help (default: false)
+```
 
 ## TODO
 

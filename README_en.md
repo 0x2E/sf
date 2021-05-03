@@ -20,16 +20,30 @@ Three ways:
 
 ## Usage
 
-|flags|function|default|
-|:-:|:-:|:-:|
-|u|「url」target domain name||
-|d|「dict」dictionary path|[built-in dictionary](https://github.com/0x2e/sf/blob/main/module/fuzz/dict.txt)|
-|o|「output」output path|[domain name]-[timestamp].txt|
-|r|「resolver」DNS resolver|8.8.8.8|
-|t|「thread」number of thread|100|
-|q|「queue」UDP send-receive queue length|100|
-|w|「wildcard」wildcard processing mode: simple mode 1, strict mode 2|1|
-|R|「retry」number of retries|2|
+```bash
+$ ./sf -h
+NAME:
+   sf - subdomain finder - https://github.com/0x2E/sf
+
+USAGE:
+   sf [global options] [arguments...]
+
+GLOBAL OPTIONS:
+   --url value, -u value                        Target url or domain name
+   --dict value, -d value                       Load dictionary from a file
+   --output value, -o value                     Output results to a file
+   --resolver value, -r value                   [fuzz] DNS resolver (default: "8.8.8.8")
+   --thread value, -t value                     [fuzz] The number of threads. Each thread will occupy a temporary port of the system until the e
+nd of the fuzz (default: 100)
+   --queue value, -q value                      [fuzz] The length of the task queue. Too high may fill the system socket buffer and cause packet
+ loss (default: 100)
+   --wildcardMode value, -w value               [fuzz] Two modes (1 or 2) for processing wildcard records. Mode 1 is only based on the IP blackl
+ist. Mode 2 matches the IP blacklist, compares the similarity of web page titles after hits, and degenerates to mode 1 if port 80 cannot be acce
+ssed. (default: 1)
+   --wildcardBlacklistMaxLen value, --wl value  [fuzz] The maximum length of the IP blacklist for wildcard records (default: 1000)
+   --retry value, -R value                      [fuzz] The number of retries (default: 2)
+   --help, -h                                   show help (default: false)
+```
 
 ## TODO
 

@@ -30,7 +30,7 @@ type FuzzModule struct {
 func New() *FuzzModule {
 	return &FuzzModule{
 		Name:     "fuzz",
-		Wildcard: &wildcard.WildcardModel{Blacklist: make(map[string]string)},
+		Wildcard: wildcard.New(),
 		UnReceived: struct {
 			Data []string
 			Mu   sync.Mutex
@@ -56,7 +56,7 @@ func (f *FuzzModule) Run(app *model.App) error {
 	if err := f.Wildcard.Init(app); err != nil {
 		return errors.Wrap(err, "wildcard initialization failed")
 	}
-	log.Printf("%s wildcard initialization completed, blacklist: %d\n", logPrefix, len(f.Wildcard.Blacklist))
+	log.Printf("%s wildcard initialization completed, blacklist: %d\n", logPrefix, f.Wildcard.BlacklistLen())
 
 	// 加载字典
 	if err := loadDict(app, f); err != nil {

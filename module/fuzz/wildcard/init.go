@@ -9,14 +9,14 @@ import (
 
 type blAction func(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map)
 
-// blMod1 宽松模式初始化：仅记录IP
-func blMod1(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
+// blMode1 宽松模式黑名单初始化：仅记录IP
+func blMode1(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
 	defer wg.Done()
 	blacklist.Store(ip, "")
 }
 
-// blMod2 严格模式初始化：记录IP和网页标题
-func blMod2(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
+// blMode2 严格模式黑名单初始化：记录IP和网页标题
+func blMode2(wg *sync.WaitGroup, subdomain, ip string, blacklist *sync.Map) {
 	defer wg.Done()
 
 	title, _ := getPageTitle("http://" + subdomain)

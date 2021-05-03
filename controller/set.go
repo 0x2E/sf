@@ -25,49 +25,42 @@ var setAppList = []setApp{
 
 // setDomain 设置域名
 func setDomain(app *model.App, c *cli.Context) {
-	input := c.String("url")
 	re, _ := regexp.Compile(`^(?:\w*://)?((?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6})/?`)
-	domain := re.FindStringSubmatch(input)
+	domain := re.FindStringSubmatch(c.String("url"))
 	if len(domain) == 1 || len(domain[1]) < 4 {
 		log.Fatal("invalid domain name")
 	}
-
 	app.Domain = domain[1]
 }
 
 // setDict 设置字典
 func setDict(app *model.App, c *cli.Context) {
-	input := c.String("dict")
-	if input != "" {
-		f, err := os.Open(input)
+	app.Dict = c.String("dict")
+	if app.Dict != "" {
+		f, err := os.Open(app.Dict)
 		if err != nil {
-			log.Fatal("failed to open dict file: ", err.Error())
+			log.Fatalf("failed to open %s: %s", app.Dict, err.Error())
 		}
 		f.Close()
 	}
-
-	app.Dict = input
 }
 
 // setOutput 设置输出文件
 func setOutput(app *model.App, c *cli.Context) {
-	input := c.String("output")
-	if input == "" {
+	app.Output = c.String("output")
+	if app.Output == "" {
 		app.Output = fmt.Sprintf("%s-%d.txt", app.Domain, app.Start.Unix())
-		return
 	}
-	app.Output = input
 }
 
 // setResolver 设置DNS服务器
 func setResolver(app *model.App, c *cli.Context) {
-	input := c.String("resolver") + ":53"
-
+	app.Resolver = c.String("resolver") + ":53"
 	m := new(dns.Msg)
-	m.SetQuestion(dns.Fqdn(app.Domain), dns.TypeA)
+	m.SetQuestion(dns.Fqdn("google.com"), dns.TypeA)
 	var err error
-	for i := 0; i < 2; i++ { // 重试几次
-		_, err = dns.Exchange(m, input)
+	for i := 0; i < 2; i++ { // 多试几次
+		_, err = dns.Exchange(m, app.Resolver)
 		if err == nil {
 			break
 		}
@@ -75,46 +68,37 @@ func setResolver(app *model.App, c *cli.Context) {
 	if err != nil { // 重试之后仍有错误
 		log.Fatal("resolver may be invalid: ", err.Error())
 	}
-
-	app.Resolver = input
 }
 
 // setThread 设置并发数
 func setThread(app *model.App, c *cli.Context) {
-	input := c.Int("thread")
-	if input < 0 || input > 99999 {
-		log.Fatal("thread must be between 0 and 99999")
-	}
-
-	app.Thread = input
+	app.Thread = c.Int("thread")
+	mustPositive("thread", app.Thread)
 }
 
-// setQueue 设置UDP请求-发送队列长度
+// setQueue 设置fuzz任务队列长度
 func setQueue(app *model.App, c *cli.Context) {
-	input := c.Int("queue")
-	if input < 0 || input > 99999 {
-		log.Fatal("queue must between 0 and 99999")
-	}
-
-	app.Queue = input
+	app.Queue = c.Int("queue")
+	mustPositive("queue", app.Queue)
 }
 
 // setWildcard 设置泛解析模式
 func setWildcard(app *model.App, c *cli.Context) {
-	input := c.Int("wildcard")
-	if input != 1 && input != 2 {
-		log.Fatal("the wildcard mod must be 1 or 2")
-	}
+	app.Wildcard.Mode = c.Int("wildcardMode")
+	mustPositive("wildcardMode", app.Wildcard.Mode)
 
-	app.Wildcard = input
+	app.Wildcard.BlacklistMaxLen = c.Int("wildcardBlacklistMaxLen")
+	mustPositive("wildcardBlacklistMaxLen", app.Wildcard.BlacklistMaxLen)
 }
 
 // setRetry 设置重试次数
 func setRetry(app *model.App, c *cli.Context) {
-	input := c.Int("retry")
-	if input < 0 || input > 99 {
-		log.Fatal("queue must between 0 and 99")
-	}
+	app.Retry = c.Int("retry")
+	mustPositive("retry", app.Retry)
+}
 
-	app.Retry = input
+func mustPositive(name string, n int) {
+	if n < 0 {
+		log.Fatalf("`%s` cannot be negative", name)
+	}
 }
