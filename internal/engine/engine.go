@@ -67,6 +67,8 @@ func (e *Engine) Run() error {
 		}(i, &wg)
 	}
 	wg.Wait()
+
+	e.output()
 	return nil
 }
 
