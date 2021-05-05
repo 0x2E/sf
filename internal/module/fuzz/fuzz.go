@@ -17,12 +17,14 @@ type FuzzModule struct {
 	name     string
 	wildcard *wildcard.WildcardModel
 	option   struct {
-		domain   string
-		dict     string
-		resolver string
-		thread   int
-		queue    int
-		retry    int
+		domain         string
+		dict           string
+		resolver       string
+		thread         int
+		queue          int
+		retry          int
+		wildcardMode   int
+		wildcardMaxLen int
 	}
 	unReceived struct {
 		data []string
@@ -35,18 +37,20 @@ type FuzzModule struct {
 }
 
 // New 初始化一个fuzz模块
-func New(option *option.Option) *FuzzModule {
+func New(o *option.Option) *FuzzModule {
 	return &FuzzModule{
 		name:     "fuzz",
-		wildcard: wildcard.New(option.Wildcard.Mode, option.Wildcard.BlacklistMaxLen),
+		wildcard: wildcard.New(o),
 		option: struct {
-			domain   string
-			dict     string
-			resolver string
-			thread   int
-			queue    int
-			retry    int
-		}{domain: option.Domain, dict: option.Dict, resolver: option.Resolver, thread: option.Thread, queue: option.Queue, retry: option.Retry},
+			domain         string
+			dict           string
+			resolver       string
+			thread         int
+			queue          int
+			retry          int
+			wildcardMode   int
+			wildcardMaxLen int
+		}{domain: o.Domain, dict: o.Dict, resolver: o.Resolver, thread: o.Thread, queue: o.Queue, retry: o.Retry, wildcardMode: o.Wildcard.Mode, wildcardMaxLen: o.Wildcard.BlacklistMaxLen},
 		unReceived: struct {
 			data []string
 			mu   sync.Mutex
@@ -68,15 +72,11 @@ func (f *FuzzModule) GetResult() map[string]string { return f.result.data }
 func (f *FuzzModule) Run() error {
 	logPrefix := "[" + f.name + "]"
 
-	// 设置泛解析黑名单
-	err := f.wildcard.Init(f.option.queue, f.option.domain, f.option.resolver)
-	if err != nil {
-		return errors.Wrap(err, "wildcard initialization failed")
-	}
+	f.wildcard.InitBlacklist(f.option.domain, f.option.resolver, f.option.queue, f.option.wildcardMode, f.option.wildcardMaxLen)
 	log.Printf("%s wildcard blacklist: %d\n", logPrefix, f.wildcard.BlacklistLen())
 
 	// 加载字典
-	err = loadDict(f)
+	err := loadDict(f.option.domain, f.option.dict, &f.unReceived.data)
 	if err != nil {
 		return errors.Wrap(err, "failed to load dict file")
 	}
@@ -88,7 +88,7 @@ func (f *FuzzModule) Run() error {
 		var wg sync.WaitGroup                    // producer(1) + consumer(n)
 
 		wg.Add(1)
-		go producer(ch, &wg, f)
+		go producer(ch, &wg, f.unReceived.data)
 
 		for i := 0; i < f.option.thread; i++ {
 			wg.Add(1)
@@ -114,11 +114,11 @@ type sfFile interface {
 var embedFile embed.FS
 
 // loadDict 加载字典
-func loadDict(f *FuzzModule) error {
+func loadDict(domain, dict string, data *[]string) error {
 	var fs sfFile
 	var err error
-	if f.option.dict != "" {
-		fs, err = os.Open(f.option.dict)
+	if dict != "" {
+		fs, err = os.Open(dict)
 	} else {
 		fs, err = embedFile.Open("dict.txt")
 	}
@@ -129,7 +129,7 @@ func loadDict(f *FuzzModule) error {
 	defer fs.Close()
 
 	// 字典去重
-	suffix := "." + f.option.domain
+	suffix := "." + domain
 	existMark := make(map[string]struct{}) // 标记已存在的数据
 	scanner := bufio.NewScanner(fs)
 	scanner.Split(bufio.ScanLines)
@@ -138,7 +138,7 @@ func loadDict(f *FuzzModule) error {
 		if _, ok := existMark[item]; ok {
 			continue
 		}
-		f.unReceived.data = append(f.unReceived.data, item)
+		*data = append(*data, item)
 	}
 
 	return nil

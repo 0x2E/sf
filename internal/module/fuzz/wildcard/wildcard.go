@@ -1,75 +1,29 @@
 package wildcard
 
-import (
-	"github.com/0x2E/rawdns"
-	"github.com/0x2E/sf/internal/util/dnsudp"
-	"github.com/pkg/errors"
-	"net"
-	"sync"
-)
+import "github.com/0x2E/sf/internal/option"
 
 // WildcardModel 泛解析模块主体结构
 type WildcardModel struct {
 	mode      int
-	blacklist struct {
-		maxLen int
-		data   map[string]string
-	}
-	c checkAction // 检测函数
-	b blAction    // 黑名单初始化函数
+	blacklist map[string]string
+	check     checkAction // 检测函数
 }
 
 // New 返回一个泛解析结构体
-func New(mode, maxlen int) *WildcardModel {
-	return &WildcardModel{
-		mode: mode,
-		blacklist: struct {
-			maxLen int
-			data   map[string]string
-		}{maxLen: maxlen, data: make(map[string]string)},
-	}
-}
-
-// Init 初始化黑名单，设置检测函数
-func (w *WildcardModel) Init(queueLen int, domain, resolver string) error {
-	switch w.mode {
+func New(option *option.Option) *WildcardModel {
+	var c checkAction
+	switch option.Wildcard.Mode {
 	case 1:
-		w.c = checkMode1
-		w.b = blMode1
+		c = checkMode1
 	case 2:
-		w.c = checkMode2
-		w.b = blMode2
+		c = checkMode2
 	}
 
-	// 初始化黑名单
-	conn, err := net.Dial("udp", resolver)
-	if err != nil {
-		return errors.Wrap(err, "failed to create socket")
+	return &WildcardModel{
+		mode:      option.Wildcard.Mode,
+		blacklist: make(map[string]string),
+		check:     c,
 	}
-	defer conn.Close()
-
-	blacklist := &sync.Map{}
-	queue := make(chan struct{}, queueLen)
-	receiverDone := make(chan struct{})
-
-	go blReceiver(conn, queue, blacklist, w, receiverDone)
-
-	for i := 0; i < w.blacklist.maxLen; i++ {
-		domain := randString(12) + "." + domain
-		if err := dnsudp.Send(conn, domain, uint16(i), rawdns.QTypeA); err != nil {
-			continue
-		}
-		queue <- struct{}{}
-	}
-	close(queue)
-
-	<-receiverDone
-
-	blacklist.Range(func(k, v interface{}) bool {
-		w.blacklist.data[k.(string)] = v.(string)
-		return true
-	})
-	return nil
 }
 
 // Check 返回的结果表示是否应该丢弃，下列情况下应丢弃：
@@ -77,11 +31,11 @@ func (w *WildcardModel) Init(queueLen int, domain, resolver string) error {
 // 2. 严格模式下命中黑名单，但无法获取网页标题
 // 3. 严格模式下命中黑名单，网页标题与黑名单中的高度相似
 func (w *WildcardModel) Check(subdomain, ip string) bool {
-	if _, ok := w.blacklist.data[ip]; !ok {
+	if _, ok := w.blacklist[ip]; !ok {
 		return false
 	}
-	res := w.c(w, subdomain, ip)
+	res := w.check(w, subdomain, ip)
 	return res
 }
 
-func (w *WildcardModel) BlacklistLen() int { return len(w.blacklist.data) }
+func (w *WildcardModel) BlacklistLen() int { return len(w.blacklist) }

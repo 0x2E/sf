@@ -24,7 +24,7 @@ func checkMode2(w *WildcardModel, subdomain, ip string) bool {
 		// 无法获取标题，丢弃
 		return true
 	}
-	rank := strsim.Compare(title, w.blacklist.data[ip])
+	rank := strsim.Compare(title, w.blacklist[ip])
 	if rank > 0.5 {
 		// 相似度较高，丢弃
 		return true
