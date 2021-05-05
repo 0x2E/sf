@@ -1,7 +1,7 @@
 package wildcard
 
 import (
-	"github.com/0x2E/sf/util/dnsudp"
+	"github.com/0x2E/sf/internal/util/dnsudp"
 	"net"
 	"strings"
 	"sync"

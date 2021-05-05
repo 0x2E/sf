@@ -7,5 +7,4 @@ require (
 	github.com/antlabs/strsim v0.0.2
 	github.com/miekg/dns v1.1.40
 	github.com/pkg/errors v0.9.1
-	github.com/urfave/cli/v2 v2.3.0
 )

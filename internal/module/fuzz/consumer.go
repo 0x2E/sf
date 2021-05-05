@@ -2,8 +2,7 @@ package fuzz
 
 import (
 	"github.com/0x2E/rawdns"
-	"github.com/0x2E/sf/model"
-	"github.com/0x2E/sf/util/dnsudp"
+	"github.com/0x2E/sf/internal/util/dnsudp"
 	"net"
 	"strings"
 	"sync"
@@ -20,20 +19,20 @@ type udpContext struct {
 }
 
 // consumer
-func consumer(ch <-chan string, wg *sync.WaitGroup, app *model.App, f *FuzzModule) {
+func consumer(f *FuzzModule, ch <-chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	conn, err := net.Dial("udp", app.Resolver)
+	conn, err := net.Dial("udp", f.option.resolver)
 	if err != nil {
 		return
 	}
 	defer conn.Close()
 
 	ctx := &udpContext{
-		queue:        make(chan struct{}, app.Queue),
+		queue:        make(chan struct{}, f.option.queue),
 		receiverDone: make(chan struct{}),
 		recorderDone: make(chan struct{}),
-		recordQueue:  make(chan string, app.Queue),
+		recordQueue:  make(chan string, f.option.queue),
 		receivedMap:  make(map[string]struct{}),
 		resultMap:    make(map[string]string),
 	}
@@ -58,29 +57,28 @@ func consumer(ch <-chan string, wg *sync.WaitGroup, app *model.App, f *FuzzModul
 
 	// 将本消费者接收到的子域名从模块结构中删去
 	tmp := make([]string, 0, 5000)
-	f.UnReceived.Mu.Lock()
-	for k := range f.UnReceived.Data {
-		if _, ok := ctx.receivedMap[f.UnReceived.Data[k]]; ok {
+	f.unReceived.mu.Lock()
+	for k := range f.unReceived.data {
+		if _, ok := ctx.receivedMap[f.unReceived.data[k]]; ok {
 			continue
 		}
-		tmp = append(tmp, f.UnReceived.Data[k])
+		tmp = append(tmp, f.unReceived.data[k])
 	}
-	f.UnReceived.Data = tmp
-	f.UnReceived.Mu.Unlock()
+	f.unReceived.data = tmp
+	f.unReceived.mu.Unlock()
 
 	// 将本消费者的结果汇总到模块结构中
-	f.Result.Mu.Lock()
+	f.result.mu.Lock()
 	for k := range ctx.resultMap {
-		f.Result.Data[k] = ctx.resultMap[k]
+		f.result.data[k] = ctx.resultMap[k]
 	}
-	f.Result.Mu.Unlock()
+	f.result.mu.Unlock()
 }
 
 // receiver UDP接收者
 func receiver(conn net.Conn, ctx *udpContext, f *FuzzModule) {
 	wg := sync.WaitGroup{} // 用于处理数据的goroutine
 	for range ctx.queue {
-		//TODO 有接收数小于发送数的情况，1.缓存满后被丢弃？ 2.某些请求被链路或DNS服务器丢弃？
 		resp, err := dnsudp.Receive(conn, 2)
 		if err != nil {
 			// 只要等待的时间足够长，依旧收不到任何响应包，就可以认为此时queue中代表的请求都无法接收到回复了，所以清空queue
@@ -119,7 +117,7 @@ func handleResp(resp *rawdns.Message, wg *sync.WaitGroup, ctx *udpContext, f *Fu
 	subdomain := resp.Questions[0].QNAME
 	ip := net.IP(resp.Answers[len(resp.Answers)-1].RDATA).String() // 用切片的最后一个，前面的可能是CNAME
 
-	if ok := f.Wildcard.Check(subdomain, ip); !ok {
+	if ok := f.wildcard.Check(subdomain, ip); !ok {
 		ctx.mu.Lock()
 		ctx.resultMap[subdomain] = ip
 		ctx.mu.Unlock()

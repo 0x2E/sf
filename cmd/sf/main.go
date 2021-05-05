@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/0x2E/sf/controller"
+	"github.com/0x2E/sf/internal/engine"
+	"github.com/0x2E/sf/internal/option"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -10,7 +11,8 @@ import (
 )
 
 const (
-	debug = false
+	debug   = false
+	version = "v0.1.2"
 )
 
 func main() {
@@ -33,5 +35,15 @@ func main() {
 	}
 
 	log.SetFlags(log.Ltime)
-	controller.Cli(os.Args)
+
+	o, err := option.ParseOption()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	e := engine.New(o)
+	err = e.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

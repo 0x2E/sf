@@ -21,7 +21,8 @@ func Send(conn net.Conn, domain string, id uint16, qtype rawdns.QType) error {
 
 // Receive 从conn中接收DNS请求，返回经过解析的结构体
 func Receive(conn net.Conn, timeout int) (*rawdns.Message, error) {
-	if err := conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout))); err != nil {
+	err := conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
+	if err != nil {
 		return nil, errors.Wrap(err, "failed to set read deadline")
 	}
 	buf := make([]byte, 1024)

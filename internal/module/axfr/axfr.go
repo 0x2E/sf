@@ -1,7 +1,7 @@
 package axfr
 
 import (
-	"github.com/0x2E/sf/model"
+	"github.com/0x2E/sf/internal/option"
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
 	"regexp"
@@ -13,38 +13,46 @@ import (
 
 // AxfrModel 域传送检测模块主体结构
 type AxfrModel struct {
-	Name   string
-	Result struct {
-		Data map[string]string
-		Mu   sync.Mutex
+	name   string
+	option struct {
+		domain   string
+		resolver string
+	}
+	result struct {
+		data map[string]string
+		mu   sync.Mutex
 	}
 }
 
-// New 初始化一个新的域传送模块结构体
-func New() *AxfrModel {
+// New 初始化一个域传送模块
+func New(option *option.Option) *AxfrModel {
 	return &AxfrModel{
-		Name: "zone-transfer",
-		Result: struct {
-			Data map[string]string
-			Mu   sync.Mutex
-		}{Data: make(map[string]string)},
+		name: "zone-transfer",
+		option: struct {
+			domain   string
+			resolver string
+		}{domain: option.Domain, resolver: option.Resolver},
+		result: struct {
+			data map[string]string
+			mu   sync.Mutex
+		}{data: make(map[string]string)},
 	}
 }
 
 // GetName 返回名称
-func (a *AxfrModel) GetName() string { return a.Name }
+func (a *AxfrModel) GetName() string { return a.name }
 
 // GetResult 返回结果
-func (a *AxfrModel) GetResult() map[string]string { return a.Result.Data }
+func (a *AxfrModel) GetResult() map[string]string { return a.result.data }
 
 // Run 运行
-func (a *AxfrModel) Run(app *model.App) error {
-	domain := dns.Fqdn(app.Domain)
+func (a *AxfrModel) Run() error {
+	domain := dns.Fqdn(a.option.domain)
 
 	// 获取NS
 	m := new(dns.Msg)
 	m.SetQuestion(domain, dns.TypeNS)
-	r, err := dns.Exchange(m, app.Resolver)
+	r, err := dns.Exchange(m, a.option.resolver)
 	if err != nil {
 		return errors.Wrap(err, "failed to get NS record")
 	}
@@ -95,11 +103,11 @@ func transfer(a *AxfrModel, wg *sync.WaitGroup, domain, ns string) {
 		}
 	}
 
-	a.Result.Mu.Lock()
+	a.result.mu.Lock()
 	for k, v := range res {
-		if _, ok := a.Result.Data[k]; !ok {
-			a.Result.Data[k] = v
+		if _, ok := a.result.data[k]; !ok {
+			a.result.data[k] = v
 		}
 	}
-	a.Result.Mu.Unlock()
+	a.result.mu.Unlock()
 }

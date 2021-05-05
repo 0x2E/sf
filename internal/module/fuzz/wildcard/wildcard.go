@@ -2,8 +2,7 @@ package wildcard
 
 import (
 	"github.com/0x2E/rawdns"
-	"github.com/0x2E/sf/model"
-	"github.com/0x2E/sf/util/dnsudp"
+	"github.com/0x2E/sf/internal/util/dnsudp"
 	"github.com/pkg/errors"
 	"net"
 	"sync"
@@ -21,19 +20,18 @@ type WildcardModel struct {
 }
 
 // New 返回一个泛解析结构体
-func New() *WildcardModel {
+func New(mode, maxlen int) *WildcardModel {
 	return &WildcardModel{
+		mode: mode,
 		blacklist: struct {
 			maxLen int
 			data   map[string]string
-		}{data: make(map[string]string)},
+		}{maxLen: maxlen, data: make(map[string]string)},
 	}
 }
 
 // Init 初始化黑名单，设置检测函数
-func (w *WildcardModel) Init(app *model.App) error {
-	w.mode = app.Wildcard.Mode
-	w.blacklist.maxLen = app.Wildcard.BlacklistMaxLen
+func (w *WildcardModel) Init(queueLen int, domain, resolver string) error {
 	switch w.mode {
 	case 1:
 		w.c = checkMode1
@@ -44,20 +42,20 @@ func (w *WildcardModel) Init(app *model.App) error {
 	}
 
 	// 初始化黑名单
-	conn, err := net.Dial("udp", app.Resolver)
+	conn, err := net.Dial("udp", resolver)
 	if err != nil {
 		return errors.Wrap(err, "failed to create socket")
 	}
 	defer conn.Close()
 
 	blacklist := &sync.Map{}
-	queue := make(chan struct{}, app.Queue)
+	queue := make(chan struct{}, queueLen)
 	receiverDone := make(chan struct{})
 
 	go blReceiver(conn, queue, blacklist, w, receiverDone)
 
 	for i := 0; i < w.blacklist.maxLen; i++ {
-		domain := randString(12) + "." + app.Domain
+		domain := randString(12) + "." + domain
 		if err := dnsudp.Send(conn, domain, uint16(i), rawdns.QTypeA); err != nil {
 			continue
 		}
