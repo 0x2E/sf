@@ -25,7 +25,7 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Build
-        run: go build cmd/sf
+        run: go build ./cmd/sf
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
