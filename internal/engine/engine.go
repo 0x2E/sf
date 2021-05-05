@@ -20,7 +20,7 @@ type Engine struct {
 	}
 }
 
-// New 初始化一个引擎
+// New 初始化引擎
 func New(o *option.Option) *Engine {
 	return &Engine{
 		Option: o,
@@ -51,7 +51,7 @@ func (e *Engine) Run() error {
 				return
 			}
 
-			// 保存结果
+			// 保存本模块的结果
 			res := i.GetResult()
 			log.Printf("%s done, subdomains: %d, time: %s\n", logPrefix, len(res), time.Since(startTime))
 			if len(res) != 0 {

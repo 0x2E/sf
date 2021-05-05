@@ -36,7 +36,7 @@ type FuzzModule struct {
 	}
 }
 
-// New 初始化一个fuzz模块
+// New 初始化fuzz模块
 func New(o *option.Option) *FuzzModule {
 	return &FuzzModule{
 		name:     "fuzz",

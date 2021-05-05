@@ -19,7 +19,7 @@ func Send(conn net.Conn, domain string, id uint16, qtype rawdns.QType) error {
 	return nil
 }
 
-// Receive 从conn中接收DNS请求，返回经过解析的结构体
+// Receive 从conn中接收DNS报文，返回解析后的结构体
 func Receive(conn net.Conn, timeout int) (*rawdns.Message, error) {
 	err := conn.SetReadDeadline(time.Now().Add(time.Second * time.Duration(timeout)))
 	if err != nil {

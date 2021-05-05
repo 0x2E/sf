@@ -24,7 +24,7 @@ type AxfrModel struct {
 	}
 }
 
-// New 初始化一个域传送模块
+// New 初始化域传送模块
 func New(option *option.Option) *AxfrModel {
 	return &AxfrModel{
 		name: "zone-transfer",
@@ -72,7 +72,7 @@ func (a *AxfrModel) Run() error {
 	return nil
 }
 
-// transfer 对一个传入的ns测试域传送
+// transfer 检测传入的NS是否有域传送漏洞
 func transfer(a *AxfrModel, wg *sync.WaitGroup, domain, ns string) {
 	defer wg.Done()
 

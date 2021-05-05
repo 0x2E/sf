@@ -9,7 +9,7 @@ type WildcardModel struct {
 	check     checkAction // 检测函数
 }
 
-// New 返回一个泛解析结构体
+// New 返回泛解析处理模块，没有初始化黑名单
 func New(option *option.Option) *WildcardModel {
 	var c checkAction
 	switch option.Wildcard.Mode {
