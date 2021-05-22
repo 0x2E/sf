@@ -4,11 +4,19 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/0x2E/sf)](https://goreportcard.com/report/github.com/0x2E/sf)
 [![go version](https://img.shields.io/github/go-mod/go-version/0x2E/sf)](https://github.com/0x2E/sf/blob/main/go.mod)
 
-> **S**ubdomain **F**inder
-
 [Chinese Document](https://github.com/0x2E/sf/blob/main/README.md)
 
-SF is an efficient subdomain collection tool that supports dictionary blasting and other functions. More modules are under development.
+SF is an efficient subdomain collection tool.
+
+- [x] Brute force
+  - Use native socket to send and receive data packets, no need to install additional dependencies.
+  - Based on stateless thinking, separate sending and receiving actions make it fast and only occupy a small amount of system resources.
+  - Support packet retry function to ensure the stability of the results. 
+  - Provides two pan-analysis processing modes
+    1. Only based on IP blacklist
+    2. Based on IP blacklist and web title similarity
+- [x] Domain transfer
+- [ ] Third-party database
 
 ## Installation
 

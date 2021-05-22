@@ -4,11 +4,19 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/0x2E/sf)](https://goreportcard.com/report/github.com/0x2E/sf)
 [![go version](https://img.shields.io/github/go-mod/go-version/0x2E/sf)](https://github.com/0x2E/sf/blob/main/go.mod)
 
-> **S**ubdomain **F**inder
-
 [English Document](https://github.com/0x2E/sf/blob/main/README_en.md)
 
-SF 是一个高效的子域名收集工具，支持字典爆破等功能，更多模块在不断开发中。
+SF 是一个高效的子域名收集工具。
+
+- [x] 字典爆破
+  - 使用原生 socket 收发数据包，无需安装额外依赖
+  - 基于无状态爆破思想，发送/接收分离，速度快且仅占用少量系统资源
+  - 支持丢包重试机制，保障结果稳定性
+  - 提供两种泛解析处理模式
+    1. 仅基于 IP 黑名单
+    2. 基于 IP 黑名单和网页标题相似度
+- [x] 域传送
+- [ ] 第三方数据库
 
 ## 安装
 
@@ -46,4 +54,4 @@ Usage of ./sf:
 ## TODO
 
 - [开发计划](https://github.com/0x2E/sf/labels/todo)
-- [提交新的建议](https://github.com/0x2E/sf/issues/new)
+- [提出建议](https://github.com/0x2E/sf/issues/new)
