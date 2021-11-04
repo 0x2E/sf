@@ -4,52 +4,33 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/0x2E/sf)](https://goreportcard.com/report/github.com/0x2E/sf)
 [![go version](https://img.shields.io/github/go-mod/go-version/0x2E/sf)](https://github.com/0x2E/sf/blob/main/go.mod)
 
-[English Document](https://github.com/0x2E/sf/blob/main/README_en.md)
+SF 是一个高效的子域名收集工具。目前已有字典爆破、域传送模块。
 
-SF 是一个高效的子域名收集工具。
+子域名由各个模块收集后送入任务队列，按需进行域名解析（Enumerator）、有效性检测（Checker）、记录（Recorder）。
 
-- [x] 字典爆破
-  - 使用原生 socket 收发数据包，无需安装额外依赖
-  - 基于无状态爆破思想，发送/接收分离，速度快且仅占用少量系统资源
-  - 支持丢包重试机制，保障结果稳定性
-  - 提供两种泛解析处理模式
-    1. 仅基于 IP 黑名单
-    2. 基于 IP 黑名单和网页标题相似度
-- [x] 域传送
-- [ ] 第三方数据库
+Enumerator 基于 UDP 的无状态特性，将发送和接收分离，效率更高，支持限流和重试机制。
+
+Checker 根据 DNS 记录等特征筛选有效子域名，目前用于泛解析检测（[关于泛解析检测的一些问题](https://github.com/0x2E/sf/issues/12)）。
+
 
 ## 安装
 
-三种方式：
+- 使用编译好的可执行文件
+  - 稳定：[release](https://github.com/0x2E/sf/releases)
+  - 主分支最新：进入 [Actions](https://github.com/0x2E/sf/actions) 中任意一次 workflow，下滑页面找到 Artifacts
+- 编译源码
 
-1. 在 [release](https://github.com/0x2E/sf/releases) 页面下载编译完成的可执行文件
-2. 下载每次 git-push 后自动编译的可执行文件：进入 [Actions](https://github.com/0x2E/sf/actions) 中任意一次 workflow 页面， 下滑页面找到 Artifacts
-3. 自行编译 main 分支源码
+## 使用方法
 
-## 使用
-
-```bash
-$ ./sf -h
-Usage of ./sf:
-  -R int
-        [fuzz] The number of retries (default 2)
-  -d string
-        Load dictionary from a file
-  -o string
-        Output results to a file
-  -q int
-        [fuzz] The length of the task queue. Too high may fill the system socket buffer and cause packet loss (default 100)
-  -r string
-        [fuzz] DNS resolver (default "8.8.8.8")
-  -t int
-        [fuzz] The number of threads. Each thread will occupy a temporary port of the system until the end of the fuzz (default 100)
-  -u string
-        Target url or domain name
-  -w int
-        [fuzz] Two modes (1 or 2) for processing wildcard records. Mode 1 is only based on the IP blacklist. Mode 2 matches the IP blacklist, compares the similarity of web page titles after hits, and degenerates to mode 1 if port 80 cannot be accessed (default 1)
-  -wl int
-        [fuzz] The maximum length of the IP blacklist for wildcard records (default 1000)
-```
+- `-u` 目标域名（必需）
+- `-f` 字典路径，为空时不启动爆破模块
+- `-r` DNS 服务器，默认 `8.8.8.8`
+- `-o` 结果输出路径，默认 `{domain}.txt`
+- `-check` 开启有效性检查
+- `-t` 并发数，默认 200
+- `-rate` 每秒最大请求量，默认 2000
+- `-retry` 重试次数，默认 3
+- `-h` 输出完整参数列表
 
 ## TODO
 

@@ -2,96 +2,99 @@ package engine
 
 import (
 	"bufio"
-	"fmt"
+	"github.com/0x2E/sf/internal/conf"
 	"github.com/0x2E/sf/internal/module"
-	"github.com/0x2E/sf/internal/option"
+	"github.com/pkg/errors"
+	"github.com/schollz/progressbar/v3"
 	"log"
 	"os"
 	"sync"
 	"time"
 )
 
+const (
+	RESOLVER = "8.8.8.8"
+	THREAD   = 200
+	RATE     = 2000
+	QUEUELEN = 10000
+	RETRY    = 3
+	CHECK    = false
+)
+
+var (
+	NETTIMEOUT = 3 * time.Second
+)
+
 type Engine struct {
-	Option *option.Option
-	Start  time.Time
-	Result struct {
-		Data map[string]string
-		Mu   sync.Mutex
-	}
+	conf         *conf.Config
+	check        *check
+	bar          *progressbar.ProgressBar
+	toEnumerator chan *module.Task
+	toChecker    chan *module.Task
+	toRecorder   chan *module.Task
+	result       map[string]struct{}
 }
 
-// New 初始化引擎
-func New(o *option.Option) *Engine {
+func New(config *conf.Config) *Engine {
 	return &Engine{
-		Option: o,
-		Start:  time.Now(),
-		Result: struct {
-			Data map[string]string
-			Mu   sync.Mutex
-		}{Data: make(map[string]string)},
+		conf:         config,
+		check:        &check{},
+		bar:          progressbar.Default(-1, "DNS response receiving"),
+		result:       make(map[string]struct{}),
+		toEnumerator: make(chan *module.Task, QUEUELEN),
+		toChecker:    make(chan *module.Task, QUEUELEN),
+		toRecorder:   make(chan *module.Task, QUEUELEN),
 	}
 }
 
-// Run 运行
 func (e *Engine) Run() error {
+	startTime := time.Now()
 	wg := sync.WaitGroup{}
-	for _, i := range module.Load(e.Option) {
+	e.check.existWildcard = e.conf.Check && e.existWildcard()
+	if e.check.existWildcard {
 		wg.Add(1)
-		go func(i module.Module, wg *sync.WaitGroup) {
-			defer wg.Done()
+		go e.checker(&wg)
+	} else {
+		close(e.toChecker)
+	}
+	wg.Add(2)
+	go e.enumerator(&wg)
+	go e.recorder(&wg)
 
-			startTime := time.Now()
-			logPrefix := "[" + i.GetName() + "]"
-
-			log.Println(logPrefix + " start")
-
-			err := i.Run()
+	modules := module.Load(e.conf, e.toEnumerator, e.toRecorder)
+	wgModules := sync.WaitGroup{}
+	for i := range modules {
+		wgModules.Add(1)
+		go func(m module.Module) {
+			defer wgModules.Done()
+			err := m.Run()
 			if err != nil {
-				log.Printf("%s error: %s\n", logPrefix, err.Error())
+				log.Printf("[%s] error: %s\n", m.GetName(), err)
 				return
 			}
-
-			// 保存本模块的结果
-			res := i.GetResult()
-			log.Printf("%s done, subdomains: %d, time: %s\n", logPrefix, len(res), time.Since(startTime))
-			if len(res) != 0 {
-				e.Result.Mu.Lock()
-				for k, v := range res {
-					if _, ok := e.Result.Data[k]; ok { // 结果已存在则跳过
-						continue
-					}
-					e.Result.Data[k] = v
-				}
-				e.Result.Mu.Unlock()
-			}
-		}(i, &wg)
+		}(modules[i])
 	}
+	wgModules.Wait()
+	close(e.toEnumerator)
 	wg.Wait()
+	e.bar.Finish()
 
-	e.output()
-	return nil
-}
+	log.Printf("Found %d valid subdomains. %s seconds in total.\n", len(e.result), time.Since(startTime))
 
-// output 输出最终结果
-func (e *Engine) output() {
-	if len(e.Result.Data) == 0 {
-		return
+	if len(e.result) == 0 {
+		return nil
 	}
-
-	f, err := os.OpenFile(e.Option.Output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
-	if err != nil { // 无法创建结果文件，就输出到终端
-		log.Print("failed to write results into file, so output to the console: " + err.Error())
-		fmt.Println("============")
-		for k := range e.Result.Data {
-			fmt.Println(k)
-		}
-		return
+	f, err := os.OpenFile(e.conf.Output, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
+	if err != nil {
+		return errors.Wrap(err, "create output file")
 	}
 	defer f.Close()
 
-	bufWriter := bufio.NewWriter(f) // 默认缓冲4096
-	for k := range e.Result.Data {
+	bufWriter := bufio.NewWriter(f)
+	for k := range e.result {
 		_, _ = bufWriter.WriteString(k + "\n")
 	}
 	_ = bufWriter.Flush()
+	log.Printf("results are stored in %s", e.conf.Output)
+	return nil
 }
