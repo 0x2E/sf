@@ -6,6 +6,11 @@
 
 SF 是一个高效的子域名收集工具。目前已有字典爆破、域传送模块。
 
+<details>
+    <summary>演示</summary>
+    <a href="https://asciinema.org/a/447397" target="_blank"><img src="https://asciinema.org/a/447397.svg" /></a>
+</details>
+
 子域名由各个模块收集后送入任务队列，按需进行域名解析（Enumerator）、有效性检测（Checker）、记录（Recorder）。
 
 Enumerator 基于 UDP 的无状态特性，将发送和接收分离，效率更高，支持限流和重试机制。
