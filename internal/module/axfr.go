@@ -66,7 +66,7 @@ func (a *Axfr) doTransfer(wg *sync.WaitGroup, ns string) {
 		for _, rr := range v.RR {
 			t := rr.Header().Rrtype
 			if t == dns.TypeA || t == dns.TypeAAAA || t == dns.TypeCNAME || t == dns.TypeMX { //todo 补充类型
-				NewTask(rr.Header().Name, a.toNext)
+				NewTask(a.toNext, rr.Header().Name)
 			}
 		}
 	}

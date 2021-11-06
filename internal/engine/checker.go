@@ -49,8 +49,7 @@ func (e *Engine) existWildcard() bool {
 
 // checker 负责判定子域名是否有效，目前用于筛选掉泛解析域名。原本实现了两个判别条件（DNS特征和HTTP特征），但HTTP的性价比实在太低，暂时注释掉。
 //
-// 考虑到负载均衡、网关架构等情况的存在，目前没有一套通用的泛解析记录判别方案能保证准确率，
-// 建议在子域名搜集结束后，针对目标的情况定制方案对可疑子域名进一步筛选。
+// 相关讨论：https://github.com/0x2E/sf/issues/12
 func (e *Engine) checker(wg *sync.WaitGroup) {
 	defer func() {
 		close(e.toRecorder)
@@ -58,23 +57,22 @@ func (e *Engine) checker(wg *sync.WaitGroup) {
 		wg.Done()
 	}()
 
-	//wgWorker := sync.WaitGroup{}
 	for t := range e.toChecker {
-		if len(t.Answer) != len(e.check.dnsMark) {
-			e.toRecorder <- t
-			continue
-		}
-		//wgWorker.Add(1) //todo 限量
-		//go e.doCheck(t, &wgWorker)
-		t.Answer[0].Header().Name = "" // 将DNS查询的域名置空，方便比较
-		for i, v := range e.check.dnsMark {
-			if !dns.IsDuplicate(v, t.Answer[i]) {
-				e.toRecorder <- t
-				continue
+		if len(t.Answer) == len(e.check.dnsMark) {
+			allDuplicate := true
+			t.Answer[0].Header().Name = "" // 将DNS查询的域名置空，方便比较
+			for i, v := range e.check.dnsMark {
+				if !dns.IsDuplicate(v, t.Answer[i]) {
+					allDuplicate = false
+					break
+				}
+			}
+			if allDuplicate {
+				t.Valid = false
 			}
 		}
+		e.toRecorder <- t
 	}
-	//wgWorker.Wait()
 }
 
 //// doCheck 判断一个子域名是否有效

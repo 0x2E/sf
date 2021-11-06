@@ -33,12 +33,14 @@ type Task struct {
 	Answer    []dns.RR
 	Time      int64 // 发出DNS请求的时间
 	Received  bool
+	Valid     bool // 表示分别存入valid和invalid结果集。传入的checker的可能被修改，否则保持NewTask时的赋值直到recorder
 	//todo 优先级字段，比如域传送的比爆破的优先级更高，域传送的结果应该覆盖爆破结果
 }
 
 // NewTask 创建一个任务并发送到目标队列
-func NewTask(domain string, toNext chan<- *Task) {
+func NewTask(toNext chan<- *Task, domain string) {
 	toNext <- &Task{
 		Subdomain: dns.Fqdn(domain),
+		Valid:     true,
 	}
 }

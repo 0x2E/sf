@@ -44,7 +44,7 @@ func (d *Wordlist) Run() error {
 		if _, ok := existMark[item]; ok {
 			continue
 		}
-		NewTask(item, d.toNext)
+		NewTask(d.toNext, item)
 	}
 	return nil
 }

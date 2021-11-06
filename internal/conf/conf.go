@@ -4,7 +4,6 @@ import (
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
 	"os"
-	"strings"
 )
 
 const (
@@ -15,7 +14,6 @@ type Config struct {
 	Domain   string // 目标域名
 	Wordlist string // 字典路径
 	Resolver string // DNS服务器
-	Output   string // 输出路径
 	Thread   int    // enumerator并发数
 	Rate     int    // 每秒最大发包数
 	Retry    int    // 重试次数
@@ -35,10 +33,6 @@ func (c *Config) Verify() error {
 			return errors.Wrap(err, "open wordlist file")
 		}
 		f.Close()
-	}
-
-	if strings.TrimSpace(c.Output) == "" {
-		c.Output = c.Domain + "txt" // domain结尾已经有一个点了
 	}
 
 	c.Resolver = c.Resolver + ":53"

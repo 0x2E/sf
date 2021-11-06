@@ -11,12 +11,13 @@ func (e *Engine) recorder(wg *sync.WaitGroup) {
 	}()
 
 	var subdomain string
-	var ok bool
 	for t := range e.toRecorder {
 		subdomain = t.Subdomain[:len(t.Subdomain)-1]
-		if _, ok = e.result[subdomain]; ok {
-			continue
+		if t.Valid {
+			e.valid = append(e.valid, subdomain)
+		} else {
+			e.invalid = append(e.invalid, subdomain)
 		}
-		e.result[subdomain] = struct{}{}
 	}
+	// todo 去重
 }
