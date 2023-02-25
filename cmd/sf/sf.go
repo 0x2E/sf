@@ -29,7 +29,7 @@ func main() {
 	flag.IntVar(&c.Thread, "t", engine.THREAD, "Number of concurrent")
 	flag.IntVar(&c.Rate, "rate", engine.RATE, "Maximum number of DNS requests sent per second")
 	flag.IntVar(&c.Retry, "retry", engine.RETRY, "Number of retries")
-	flag.BoolVar(&c.Check, "check", engine.CHECK, "Whether to check the validity of the subdomain")
+	flag.BoolVar(&c.Check, "check", engine.CHECK, "Whether to check the validity of the subdomain, set to false with '-check=false'")
 	flag.Parse()
 
 	if err := c.Verify(); err != nil {
