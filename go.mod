@@ -1,6 +1,6 @@
 module github.com/0x2E/sf
 
-go 1.17
+go 1.18
 
 require (
 	github.com/miekg/dns v1.1.50
