@@ -1,6 +1,4 @@
-.vscode/
-*.txt
 *.pprof
 .DS_Store
 ._*
-
+dist/

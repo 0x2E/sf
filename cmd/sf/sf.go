@@ -16,13 +16,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var Version, Branch, Commit string
+
 func main() {
 	var (
-		c      = conf.C
-		output string
-		slient bool
-		debug  bool
-		help   bool
+		c           = conf.C
+		output      string
+		slient      bool
+		debug       bool
+		showHelp    bool
+		showVersion bool
 	)
 	flag.StringVarP(&c.Target, "domain", "d", "", "Target domain name")
 	flag.StringVarP(&c.Wordlist, "wordlist", "w", "", "Wordlist file")
@@ -36,12 +39,18 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 	flag.BoolVar(&c.ValidCheck, "check", false, "Check the validity of the subdomains")
 	flag.BoolVar(&slient, "slient", false, "Only output valid subdomains, and logs that caused abnormal exit, e.g., fatal and panic")
 	flag.BoolVar(&debug, "debug", false, "Set the log level to debug, and enable golang pprof with web service")
-	flag.BoolVarP(&help, "help", "h", false, "Show help message")
+	flag.BoolVarP(&showVersion, "version", "v", false, "Show version")
+	flag.BoolVarP(&showHelp, "help", "h", false, "Show help message")
 	flag.CommandLine.SortFlags = false
 	flag.Parse()
 
-	if help {
+	if showHelp {
 		flag.Usage()
+		os.Exit(0)
+	}
+
+	if showVersion {
+		version()
 		os.Exit(0)
 	}
 
@@ -49,6 +58,7 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 		TimestampFormat: "20060102 15:04:05",
 		FullTimestamp:   true,
 	})
+
 	if slient {
 		if debug {
 			logrus.Fatal("cannot enable 'debug' and 'slient' at the same time")
@@ -56,6 +66,7 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 		logrus.SetLevel(logrus.FatalLevel)
 	} else {
 		fmt.Print(banner)
+		version()
 	}
 
 	if debug {
@@ -102,4 +113,8 @@ func pprof() {
 	if err := http.ListenAndServe(":10000", nil); err != nil {
 		logrus.Error(err)
 	}
+}
+
+func version() {
+	fmt.Printf("version: %s. branch: %s. commit: %s\n", Version, Branch, Commit)
 }

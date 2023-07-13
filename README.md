@@ -1,6 +1,5 @@
 # SF
 
-[![build status](https://img.shields.io/github/actions/workflow/status/0x2E/sf/build.yml?branch=main)](https://github.com/0x2E/sf/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/0x2E/sf)](https://goreportcard.com/report/github.com/0x2E/sf)
 [![go version](https://img.shields.io/github/go-mod/go-version/0x2E/sf)](https://github.com/0x2E/sf/blob/main/go.mod)
 
@@ -13,11 +12,7 @@ SF 是一个高效的子域名爆破工具：
 
 ## 安装
 
-1. 编译好的可执行文件
-
-   - [Release](https://github.com/0x2E/sf/releases)
-   - 主分支的最新提交：[Actions](https://github.com/0x2E/sf/actions) 中任意一次 workflow 的 Artifacts
-
+1. [Release](https://github.com/0x2E/sf/releases)
 2. 编译源码
 
 ```shell
