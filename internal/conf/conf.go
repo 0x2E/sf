@@ -9,13 +9,17 @@ import (
 )
 
 const (
-	TESTDOMAIN = "github.com"
+	TestDN      = "github.com"
+	Placeholder = "%"
 )
 
 var C = &Config{}
 
 type Config struct {
-	Target             string
+	// Target is the RawTarget that trimmed subdomains which contains placeholder
+	Target string
+	// RawTarget is the user original input
+	RawTarget          string
 	Wordlist           string
 	Resolver           string
 	Concurrent         int
@@ -27,8 +31,19 @@ type Config struct {
 
 // Verify checks if the args is valid
 func (c *Config) Verify() error {
+	c.Target = c.RawTarget
+	// trim subdomains that contains placeholder
+	dn := c.Target
+	lastPh := strings.LastIndex(dn, Placeholder)
+	if lastPh > 0 {
+		dn = dn[lastPh+1:]
+		dot := strings.Index(dn, ".")
+		dn = dn[dot+1:]
+	}
+	c.Target = dn
+
 	if _, ok := dns.IsDomainName(c.Target); !ok {
-		return errors.New("invalid domain name")
+		return errors.New("invalid domain name: " + c.Target)
 	}
 	c.Target = dns.Fqdn(c.Target)
 
@@ -45,7 +60,7 @@ func (c *Config) Verify() error {
 		c.Resolver = c.Resolver + ":53"
 	}
 	m := &dns.Msg{}
-	m.SetQuestion(dns.Fqdn(TESTDOMAIN), dns.TypeA)
+	m.SetQuestion(dns.Fqdn(TestDN), dns.TypeA)
 	if _, err := dns.Exchange(m, c.Resolver); err != nil {
 		return errors.Wrap(err, "resolver may be invalid")
 	}

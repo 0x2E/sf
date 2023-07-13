@@ -21,16 +21,29 @@ func RunWordlist(ctx context.Context, toNext chan<- *Task) error {
 	}
 	defer f.Close()
 
-	suffix := "." + conf.C.Target
+	var fn func(string) string
+	if conf.C.RawTarget != conf.C.Target {
+		fn = func(word string) string {
+			return strings.ReplaceAll(conf.C.RawTarget, "%", word)
+		}
+	} else {
+		suffix := "." + conf.C.Target
+		fn = func(word string) string {
+			return word + suffix
+		}
+	}
+
 	dSet := make(map[string]struct{})
 	scanner := bufio.NewScanner(f)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
-		dn := strings.TrimSpace(scanner.Text()) + suffix
-		if _, ok := dSet[dn]; ok {
+		word := strings.TrimSpace(scanner.Text())
+		if _, ok := dSet[word]; ok {
 			continue
 		}
-		dSet[dn] = struct{}{}
+		dSet[word] = struct{}{}
+
+		dn := fn(word)
 		putTask(toNext, dn)
 	}
 	return nil

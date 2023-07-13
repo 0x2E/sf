@@ -28,7 +28,8 @@ func main() {
 		showHelp     bool
 		showVersion  bool
 	)
-	flag.StringVarP(&c.Target, "domain", "d", "", "Target domain name")
+	flag.StringVarP(&c.RawTarget, "domain", "d", "", `Target domain name.
+If the placeholder % exists, only replaces the placeholder instead of splicing wordlist as subdomain`)
 	flag.StringVarP(&c.Wordlist, "wordlist", "w", "", "Wordlist file")
 	flag.StringVarP(&c.Resolver, "resolver", "r", "8.8.8.8", "DNS resolver")
 	flag.StringVarP(&output, "output", "o", "", "Output results to a file")
@@ -82,7 +83,7 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 	}
 
 	logrus.Infof("target: [%s]. wordlist: [%s]. resolver: [%s]. concurrent: [%d]. rate: [%d]. retry: [%d]. check valid: [%t]",
-		c.Target, c.Wordlist, c.Resolver, c.Concurrent, c.Rate, c.Retry, c.ValidCheck)
+		c.RawTarget, c.Wordlist, c.Resolver, c.Concurrent, c.Rate, c.Retry, c.ValidCheck)
 
 	startAt := time.Now()
 	res := engine.New().Run()
@@ -111,8 +112,8 @@ func saveResult(path string, data []string) {
 }
 
 func pprof() {
-	logrus.Debug("pprof is on 0.0.0.0:10000/debug/pprof")
-	if err := http.ListenAndServe(":10000", nil); err != nil {
+	logrus.Debug("pprof is on 127.0.0.1:10000/debug/pprof")
+	if err := http.ListenAndServe("127.0.0.1:10000", nil); err != nil {
 		logrus.Error(err)
 	}
 }
