@@ -20,12 +20,13 @@ var Version, Branch, Commit string
 
 func main() {
 	var (
-		c           = conf.C
-		output      string
-		slient      bool
-		debug       bool
-		showHelp    bool
-		showVersion bool
+		c            = conf.C
+		output       string
+		disableCheck bool
+		slient       bool
+		debug        bool
+		showHelp     bool
+		showVersion  bool
 	)
 	flag.StringVarP(&c.Target, "domain", "d", "", "Target domain name")
 	flag.StringVarP(&c.Wordlist, "wordlist", "w", "", "Wordlist file")
@@ -36,7 +37,7 @@ func main() {
 It is recommended to determine if the rate is appropriate by the send/recv statistics in log`)
 	flag.IntVar(&c.Retry, "retry", 1, "Number of retries")
 	flag.IntVarP(&c.StatisticsInterval, "stats", "s", 2, "Statistics interval(seconds) in log")
-	flag.BoolVar(&c.ValidCheck, "check", false, "Check the validity of the subdomains")
+	flag.BoolVar(&disableCheck, "disable-check", false, "Disable check the validity of the subdomains")
 	flag.BoolVar(&slient, "slient", false, "Only output valid subdomains, and logs that caused abnormal exit, e.g., fatal and panic")
 	flag.BoolVar(&debug, "debug", false, "Set the log level to debug, and enable golang pprof with web service")
 	flag.BoolVarP(&showVersion, "version", "v", false, "Show version")
@@ -73,6 +74,8 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 		logrus.SetLevel(logrus.DebugLevel)
 		go pprof()
 	}
+
+	c.ValidCheck = !disableCheck
 
 	if err := c.Verify(); err != nil {
 		logrus.Fatal(err)
