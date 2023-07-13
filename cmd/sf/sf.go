@@ -85,12 +85,11 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 		c.Target, c.Wordlist, c.Resolver, c.Concurrent, c.Rate, c.Retry, c.ValidCheck)
 
 	startAt := time.Now()
-	app := engine.New(c)
-	valid, invalid := app.Run()
+	res := engine.New().Run()
 
-	logrus.Infof("found %d valid, %d invalid. %.2f seconds in total.\n", len(valid), len(invalid), time.Since(startAt).Seconds())
+	logrus.Infof("found %d subdomains. time: %.2f seconds.\n", len(res), time.Since(startAt).Seconds())
 
-	saveResult(output, valid)
+	saveResult(output, res)
 }
 
 func saveResult(path string, data []string) {

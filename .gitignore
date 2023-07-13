@@ -1,4 +1,5 @@
 *.pprof
 .DS_Store
 ._*
+*.txt
 dist/

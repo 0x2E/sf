@@ -160,7 +160,7 @@ func (w *resolverWorker) receiver(wg *sync.WaitGroup, toNext chan<- *module.Task
 				if msg.Rcode != dns.RcodeSuccess || len(msg.Answer) == 0 {
 					continue
 				}
-				task.Answer = msg.Answer
+				task.Record = msg.Answer[0]
 				toNext <- task
 			}
 		}

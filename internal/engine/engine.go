@@ -22,15 +22,14 @@ var (
 type Engine struct {
 	needCheck bool
 	// wildcardRecord is the wildcard record (`*.example.com`)
-	wildcardRecord []dns.RR
+	wildcardRecord dns.RR
 	toResolver     chan *module.Task
 	toChecker      chan *module.Task
 	toRecorder     chan *module.Task
-	validResults   []string
-	invalidResults []string
+	results        []string
 }
 
-func New(config *conf.Config) *Engine {
+func New() *Engine {
 	return &Engine{
 		toResolver: make(chan *module.Task, QueueMaxLen),
 		toChecker:  make(chan *module.Task, QueueMaxLen),
@@ -38,13 +37,12 @@ func New(config *conf.Config) *Engine {
 	}
 }
 
-func (e *Engine) Run() ([]string, []string) {
+func (e *Engine) Run() []string {
 	wg := sync.WaitGroup{}
 	e.needCheck = conf.C.ValidCheck && e.existWildcard()
 	if e.needCheck {
 		wg.Add(1)
 		go e.checker(&wg)
-		logrus.Debugf("wirldcard record: %#v", e.wildcardRecord)
 	} else {
 		logrus.Debug("turn off checker")
 		close(e.toChecker)
@@ -88,5 +86,5 @@ func (e *Engine) Run() ([]string, []string) {
 	close(e.toResolver)
 	wg.Wait()
 
-	return e.validResults, e.invalidResults
+	return e.results
 }
