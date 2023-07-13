@@ -2,61 +2,91 @@ package main
 
 import (
 	"bufio"
-	"flag"
-	"github.com/0x2E/sf/internal/conf"
-	"github.com/0x2E/sf/internal/engine"
-	"log"
+	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"strings"
 	"time"
-)
 
-const (
-	DEBUG = false
+	flag "github.com/spf13/pflag"
+
+	"github.com/0x2E/sf/internal/conf"
+	"github.com/0x2E/sf/internal/engine"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	debug()
-
-	var output string
-	c := &conf.Config{}
-	flag.StringVar(&c.Domain, "u", "", "Target domain name or URL")
-	flag.StringVar(&c.Wordlist, "f", "", "Load wordlist from a file")
-	flag.StringVar(&c.Resolver, "r", engine.RESOLVER, "DNS resolver")
-	flag.StringVar(&output, "o", "", "Output results to a file")
-	flag.IntVar(&c.Thread, "t", engine.THREAD, "Number of concurrent")
-	flag.IntVar(&c.Rate, "rate", engine.RATE, "Maximum number of DNS requests sent per second")
-	flag.IntVar(&c.Retry, "retry", engine.RETRY, "Number of retries")
-	flag.BoolVar(&c.Check, "check", engine.CHECK, "Whether to check the validity of the subdomain, set to false with '-check=false'")
+	var (
+		c      = conf.C
+		output string
+		slient bool
+		debug  bool
+		help   bool
+	)
+	flag.StringVarP(&c.Target, "domain", "d", "", "Target domain name")
+	flag.StringVarP(&c.Wordlist, "wordlist", "w", "", "Wordlist file")
+	flag.StringVarP(&c.Resolver, "resolver", "r", "8.8.8.8", "DNS resolver")
+	flag.StringVarP(&output, "output", "o", "", "Output results to a file")
+	flag.IntVarP(&c.Concurrent, "concurrent", "t", 200, "Number of concurrent")
+	flag.IntVar(&c.Rate, "rate", 1000, `Maximum rate DNS req/s. 
+It is recommended to determine if the rate is appropriate by the send/recv statistics in log`)
+	flag.IntVar(&c.Retry, "retry", 1, "Number of retries")
+	flag.IntVarP(&c.StatisticsInterval, "stats", "s", 2, "Statistics interval(seconds) in log")
+	flag.BoolVar(&c.ValidCheck, "check", false, "Check the validity of the subdomains")
+	flag.BoolVar(&slient, "slient", false, "Only output valid subdomains, and logs that caused abnormal exit, e.g., fatal and panic")
+	flag.BoolVar(&debug, "debug", false, "Set the log level to debug, and enable golang pprof with web service")
+	flag.BoolVarP(&help, "help", "h", false, "Show help message")
+	flag.CommandLine.SortFlags = false
 	flag.Parse()
 
+	if help {
+		flag.Usage()
+		os.Exit(0)
+	}
+
+	logrus.SetFormatter(&logrus.TextFormatter{
+		TimestampFormat: "20060102 15:04:05",
+		FullTimestamp:   true,
+	})
+	if slient {
+		if debug {
+			logrus.Fatal("cannot enable 'debug' and 'slient' at the same time")
+		}
+		logrus.SetLevel(logrus.FatalLevel)
+	} else {
+		fmt.Print(banner)
+	}
+
+	if debug {
+		logrus.SetLevel(logrus.DebugLevel)
+		go pprof()
+	}
+
 	if err := c.Verify(); err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
-	if strings.TrimSpace(output) == "" {
-		output = c.Domain + "txt" // domain结尾已经有一个点了
-	}
+	logrus.Infof("target: [%s]. wordlist: [%s]. resolver: [%s]. concurrent: [%d]. rate: [%d]. retry: [%d]. check valid: [%t]",
+		c.Target, c.Wordlist, c.Resolver, c.Concurrent, c.Rate, c.Retry, c.ValidCheck)
 
-	startTime := time.Now()
-
+	startAt := time.Now()
 	app := engine.New(c)
 	valid, invalid := app.Run()
-	log.Printf("Found %d valid, %d invalid. %.2f seconds in total.\n", len(valid), len(invalid), time.Since(startTime).Seconds())
+
+	logrus.Infof("found %d valid, %d invalid. %.2f seconds in total.\n", len(valid), len(invalid), time.Since(startAt).Seconds())
 
 	saveResult(output, valid)
-	saveResult("invalid_"+output, invalid)
 }
 
 func saveResult(path string, data []string) {
-	if len(data) == 0 {
+	if strings.TrimSpace(path) == "" || len(data) == 0 {
 		return
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0666)
+
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0o755)
 	if err != nil {
-		log.Printf("cannot save results into file: %s", err)
+		logrus.Error("cannot save results:", err)
 		return
 	}
 	defer f.Close()
@@ -65,22 +95,11 @@ func saveResult(path string, data []string) {
 		bufWriter.WriteString(v + "\n")
 	}
 	bufWriter.Flush()
-	log.Printf("Results are stored in %s\n", path)
 }
 
-func debug() {
-	if DEBUG {
-		//f, _ := os.OpenFile("sf-dev/cpu.pprof", os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
-		//defer f.Close()
-		//pprof.StartCPUProfile(f)
-		//defer pprof.StopCPUProfile()
-
-		go func() {
-			// localhost:10010/debug/pprof
-			if err := http.ListenAndServe(":10010", nil); err != nil {
-				log.Fatal(err)
-			}
-			os.Exit(0)
-		}()
+func pprof() {
+	logrus.Debug("pprof is on 0.0.0.0:10000/debug/pprof")
+	if err := http.ListenAndServe(":10000", nil); err != nil {
+		logrus.Error(err)
 	}
 }

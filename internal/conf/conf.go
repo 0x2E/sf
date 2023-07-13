@@ -1,31 +1,37 @@
 package conf
 
 import (
+	"os"
+	"strings"
+
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
-	"os"
+	"github.com/sirupsen/logrus"
 )
 
 const (
 	TESTDOMAIN = "github.com"
 )
 
+var C = &Config{}
+
 type Config struct {
-	Domain   string // 目标域名
-	Wordlist string // 字典路径
-	Resolver string // DNS服务器
-	Thread   int    // enumerator并发数
-	Rate     int    // 每秒最大发包数
-	Retry    int    // 重试次数
-	Check    bool   // 是否开启有效性检查
+	Target             string
+	Wordlist           string
+	Resolver           string
+	Concurrent         int
+	Rate               int
+	Retry              int
+	StatisticsInterval int
+	ValidCheck         bool
 }
 
-// Verify 检查参数是否正常
+// Verify checks if the args is valid
 func (c *Config) Verify() error {
-	if _, ok := dns.IsDomainName(c.Domain); !ok {
+	if _, ok := dns.IsDomainName(c.Target); !ok {
 		return errors.New("invalid domain name")
 	}
-	c.Domain = dns.Fqdn(c.Domain)
+	c.Target = dns.Fqdn(c.Target)
 
 	if c.Wordlist != "" {
 		f, err := os.Open(c.Wordlist)
@@ -35,15 +41,33 @@ func (c *Config) Verify() error {
 		f.Close()
 	}
 
-	c.Resolver = c.Resolver + ":53"
+	if strings.Index(c.Resolver, ":") == -1 {
+		// TODO: TCP/DoT/DoH
+		c.Resolver = c.Resolver + ":53"
+	}
 	m := &dns.Msg{}
 	m.SetQuestion(dns.Fqdn(TESTDOMAIN), dns.TypeA)
 	if _, err := dns.Exchange(m, c.Resolver); err != nil {
 		return errors.Wrap(err, "resolver may be invalid")
 	}
 
-	if c.Thread < 0 || c.Retry < 0 {
-		return errors.New("numerical parameters must be positive")
+	if c.Concurrent < 1 {
+		return errors.New("'concurrent' should be greater than 1")
+	}
+
+	if c.Retry < 0 {
+		return errors.New("'retry' should be greater than 0")
+	}
+
+	if c.Rate < 1 {
+		return errors.New("'rate' should be greater than 1")
+	}
+	if c.Rate > 3000 {
+		logrus.Warn("A huge rate may result in socket buffers being overwritten, network blocking, and so on. If the send/recv statistics in log are too different, reduce the rate")
+	}
+
+	if c.StatisticsInterval < 1 {
+		return errors.New("'stats' should be greater than 1")
 	}
 
 	return nil

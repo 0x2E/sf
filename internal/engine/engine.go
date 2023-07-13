@@ -1,83 +1,92 @@
 package engine
 
 import (
-	"github.com/0x2E/sf/internal/conf"
-	"github.com/0x2E/sf/internal/module"
-	"github.com/schollz/progressbar/v3"
-	"log"
+	"context"
 	"sync"
 	"time"
+
+	"github.com/0x2E/sf/internal/conf"
+	"github.com/0x2E/sf/internal/module"
+	"github.com/miekg/dns"
+	"github.com/sirupsen/logrus"
 )
 
 const (
-	RESOLVER = "8.8.8.8"
-	THREAD   = 200
-	RATE     = 2000
-	QUEUELEN = 10000
-	RETRY    = 3
-	CHECK    = true
+	QueueMaxLen = 1000
 )
 
 var (
-	NETTIMEOUT = 3 * time.Second
+	NetTimeout = 3 * time.Second
 )
 
 type Engine struct {
-	conf         *conf.Config
-	check        *check
-	bar          *progressbar.ProgressBar
-	toEnumerator chan *module.Task
-	toChecker    chan *module.Task
-	toRecorder   chan *module.Task
-	valid        []string
-	invalid      []string
+	needCheck bool
+	// wildcardRecord is the wildcard record (`*.example.com`)
+	wildcardRecord []dns.RR
+	toResolver     chan *module.Task
+	toChecker      chan *module.Task
+	toRecorder     chan *module.Task
+	validResults   []string
+	invalidResults []string
 }
 
 func New(config *conf.Config) *Engine {
 	return &Engine{
-		conf:  config,
-		check: &check{},
-		bar:   progressbar.Default(-1, "DNS response receiving"),
-		valid: make([]string, 0, QUEUELEN),
-		// invalid 在检查existWildcard后创建
-		toEnumerator: make(chan *module.Task, QUEUELEN),
-		toChecker:    make(chan *module.Task, QUEUELEN),
-		toRecorder:   make(chan *module.Task, QUEUELEN),
+		toResolver: make(chan *module.Task, QueueMaxLen),
+		toChecker:  make(chan *module.Task, QueueMaxLen),
+		toRecorder: make(chan *module.Task, QueueMaxLen),
 	}
 }
 
-// Run 运行，返回有效和无效结果集，不存在泛解析时无效结果集为nil
 func (e *Engine) Run() ([]string, []string) {
 	wg := sync.WaitGroup{}
-	e.check.existWildcard = e.conf.Check && e.existWildcard()
-	if e.check.existWildcard {
+	e.needCheck = conf.C.ValidCheck && e.existWildcard()
+	if e.needCheck {
 		wg.Add(1)
 		go e.checker(&wg)
-		e.invalid = make([]string, 0, QUEUELEN)
+		logrus.Debugf("wirldcard record: %#v", e.wildcardRecord)
 	} else {
+		logrus.Debug("turn off checker")
 		close(e.toChecker)
 	}
 	wg.Add(2)
-	go e.enumerator(&wg)
+	go e.resolver(&wg)
 	go e.recorder(&wg)
 
-	modules := module.Load(e.conf, e.toEnumerator, e.toRecorder)
 	wgModules := sync.WaitGroup{}
-	for i := range modules {
-		wgModules.Add(1)
-		go func(m module.Module) {
-			defer wgModules.Done()
-			err := m.Run()
-			if err != nil {
-				log.Printf("[%s] error: %s\n", m.GetName(), err)
-				return
-			}
-		}(modules[i])
-	}
-	wgModules.Wait()
-	close(e.toEnumerator)
-	wg.Wait()
-	e.bar.Finish()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	return e.valid, e.invalid
+	wgModules.Add(1)
+	go func() {
+		startAt := time.Now()
+		logger := logrus.WithField("module", "zone-transfer")
+		defer wgModules.Done()
+
+		if err := module.RunAxfr(ctx, e.toRecorder); err != nil {
+			logger.Error(err)
+		}
+
+		logger.Debug("done, time: " + time.Since(startAt).String())
+	}()
+	wgModules.Add(1)
+	go func() {
+		startAt := time.Now()
+		logger := logrus.WithField("module", "wordlist")
+		defer wgModules.Done()
+
+		if err := module.RunWordlist(ctx, e.toResolver); err != nil {
+			logger.Error(err)
+		}
+
+		logger.Debug("done, time: " + time.Since(startAt).String())
+	}()
+
+	wgModules.Wait()
+	logrus.Debug("all modules done")
+
+	close(e.toResolver)
+	wg.Wait()
+
+	return e.validResults, e.invalidResults
 }

@@ -1,33 +1,21 @@
 package module
 
 import (
+	"context"
+	"sync"
+
 	"github.com/0x2E/sf/internal/conf"
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
-	"sync"
 )
 
-// Axfr 域传送模块
+// RunAxfr is zone transfer module
 //
-// 使用zonetransfer.me测试（https://digi.ninja/projects/zonetransferme.php）
-type Axfr struct {
-	base
-}
-
-func newAxfr(conf *conf.Config, toRecorder chan<- *Task) *Axfr {
-	return &Axfr{
-		base: base{
-			name:   "zone-transfer",
-			conf:   conf,
-			toNext: toRecorder,
-		},
-	}
-}
-
-func (a *Axfr) Run() error {
+// test: https://digi.ninja/projects/zonetransferme.php
+func RunAxfr(ctx context.Context, toNext chan<- *Task) error {
 	m := new(dns.Msg)
-	m.SetQuestion(a.conf.Domain, dns.TypeNS)
-	r, err := dns.Exchange(m, a.conf.Resolver)
+	m.SetQuestion(conf.C.Target, dns.TypeNS)
+	r, err := dns.Exchange(m, conf.C.Resolver)
 	if err != nil {
 		return errors.Wrap(err, " get NS record")
 	}
@@ -43,30 +31,30 @@ func (a *Axfr) Run() error {
 			continue
 		}
 		wg.Add(1)
-		go a.doTransfer(&wg, n.Ns)
+		go transferOneNS(&wg, n.Ns, toNext)
 	}
 	wg.Wait()
 	return nil
 }
 
-func (a *Axfr) doTransfer(wg *sync.WaitGroup, ns string) {
+func transferOneNS(wg *sync.WaitGroup, ns string, toNext chan<- *Task) {
 	defer wg.Done()
 
 	t := new(dns.Transfer)
 	m := new(dns.Msg)
-	m.SetAxfr(a.conf.Domain)
-	recvChan, err := t.In(m, ns+":53") // 默认2秒超时
+	m.SetAxfr(conf.C.Target)
+	recvChan, err := t.In(m, ns+":53") // default timeout 2s
 	if err != nil {
 		return
 	}
 	for v := range recvChan {
-		if v.Error != nil { //todo 完善对错误类型的判断
+		if v.Error != nil { // TODO: more error type
 			break
 		}
 		for _, rr := range v.RR {
 			t := rr.Header().Rrtype
-			if t == dns.TypeA || t == dns.TypeAAAA || t == dns.TypeCNAME || t == dns.TypeMX { //todo 补充类型
-				NewTask(a.toNext, rr.Header().Name)
+			if t == dns.TypeA || t == dns.TypeAAAA || t == dns.TypeCNAME || t == dns.TypeMX { // TODO: more type
+				putTask(toNext, rr.Header().Name)
 			}
 		}
 	}
