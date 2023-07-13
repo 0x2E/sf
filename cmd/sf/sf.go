@@ -32,8 +32,8 @@ func main() {
 	flag.StringVarP(&c.Wordlist, "wordlist", "w", "", "Wordlist file")
 	flag.StringVarP(&c.Resolver, "resolver", "r", "8.8.8.8", "DNS resolver")
 	flag.StringVarP(&output, "output", "o", "", "Output results to a file")
-	flag.IntVarP(&c.Concurrent, "concurrent", "t", 200, "Number of concurrent")
-	flag.IntVar(&c.Rate, "rate", 1000, `Maximum rate DNS req/s. 
+	flag.IntVarP(&c.Concurrent, "concurrent", "t", 800, "Number of concurrent")
+	flag.IntVar(&c.Rate, "rate", 30000, `Maximum rate req/s. 
 It is recommended to determine if the rate is appropriate by the send/recv statistics in log`)
 	flag.IntVar(&c.Retry, "retry", 1, "Number of retries")
 	flag.IntVarP(&c.StatisticsInterval, "stats", "s", 2, "Statistics interval(seconds) in log")

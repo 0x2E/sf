@@ -6,7 +6,6 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -61,9 +60,6 @@ func (c *Config) Verify() error {
 
 	if c.Rate < 1 {
 		return errors.New("'rate' should be greater than 1")
-	}
-	if c.Rate > 3000 {
-		logrus.Warn("A huge rate may result in socket buffers being overwritten, network blocking, and so on. If the send/recv statistics in log are too different, reduce the rate")
 	}
 
 	if c.StatisticsInterval < 1 {
