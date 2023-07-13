@@ -69,7 +69,7 @@ func (e *Engine) resolver(wg *sync.WaitGroup) {
 	}()
 
 	go func() {
-		rl := ratelimit.New(conf.C.Rate)
+		rl := ratelimit.New(conf.C.Rate, ratelimit.WithoutSlack)
 		for t := range e.toResolver {
 			if _, ok := taskMap.Load(t.DomainName); ok {
 				continue
