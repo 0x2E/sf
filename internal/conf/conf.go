@@ -41,11 +41,11 @@ func (c *Config) Verify() error {
 		dn = dn[dot+1:]
 	}
 	c.Target = dn
-
 	if _, ok := dns.IsDomainName(c.Target); !ok {
 		return errors.New("invalid domain name: " + c.Target)
 	}
 	c.Target = dns.Fqdn(c.Target)
+	c.RawTarget = dns.Fqdn(c.RawTarget)
 
 	if c.Wordlist != "" {
 		f, err := os.Open(c.Wordlist)

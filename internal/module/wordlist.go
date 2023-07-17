@@ -44,7 +44,11 @@ func RunWordlist(ctx context.Context, toNext chan<- *Task) error {
 		dSet[word] = struct{}{}
 
 		dn := fn(word)
+		// logrus.Debug(dn)
 		putTask(toNext, dn)
 	}
+
+	// try main domain too
+	putTask(toNext, conf.C.Target)
 	return nil
 }
