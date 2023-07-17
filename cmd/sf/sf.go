@@ -23,7 +23,7 @@ func main() {
 		c            = conf.C
 		output       string
 		disableCheck bool
-		slient       bool
+		silent       bool
 		debug        bool
 		showHelp     bool
 		showVersion  bool
@@ -39,7 +39,7 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 	flag.IntVar(&c.Retry, "retry", 1, "Number of retries")
 	flag.IntVarP(&c.StatisticsInterval, "stats", "s", 2, "Statistics interval(seconds) in log")
 	flag.BoolVar(&disableCheck, "disable-check", false, "Disable check the validity of the subdomains")
-	flag.BoolVar(&slient, "slient", false, "Only output valid subdomains, and logs that caused abnormal exit, e.g., fatal and panic")
+	flag.BoolVar(&silent, "silent", false, "Only output valid subdomains, and logs that caused abnormal exit, e.g., fatal and panic")
 	flag.BoolVar(&debug, "debug", false, "Set the log level to debug, and enable golang pprof with web service")
 	flag.BoolVarP(&showVersion, "version", "v", false, "Show version")
 	flag.BoolVarP(&showHelp, "help", "h", false, "Show help message")
@@ -61,9 +61,9 @@ It is recommended to determine if the rate is appropriate by the send/recv stati
 		FullTimestamp:   true,
 	})
 
-	if slient {
+	if silent {
 		if debug {
-			logrus.Fatal("cannot enable 'debug' and 'slient' at the same time")
+			logrus.Fatal("cannot enable 'debug' and 'silent' at the same time")
 		}
 		logrus.SetLevel(logrus.FatalLevel)
 	} else {
